@@ -97,7 +97,7 @@
     else if ('IntersectionObserver' in window) {
       new IntersectionObserver(function (entries) {
         entries.forEach(function (e) {
-          if (e.isIntersecting) { vid.preload = 'auto'; var p = vid.play(); if (p && p.catch) p.catch(function () {}); }
+          if (e.isIntersecting) { if (vid.dataset.user === 'paused') return; vid.preload = 'auto'; var p = vid.play(); if (p && p.catch) p.catch(function () {}); }
           else vid.pause();
         });
       }, { threshold: 0.2 }).observe(vid);
@@ -113,6 +113,27 @@
   function kstDay(t) { return Math.floor((t + 9 * 3600000) / DAY); }
   function pad2(n) { return (n < 10 ? '0' : '') + n; }
   function daysLeft() { return kstDay(START) - kstDay(Date.now()); }
+  var rollBox = null;
+  function roll(b, v) {
+    if (b.getAttribute('data-v') === v) return;
+    b.setAttribute('data-v', v);
+    var nu = document.createElement('span');
+    nu.textContent = v;
+    var old = b.firstElementChild;
+    b.appendChild(nu);
+    if (old && window.gsap && d.classList.contains('motion') && d.classList.contains('ready')) {
+      window.gsap.fromTo(nu, { yPercent: 100 }, { yPercent: 0, duration: 0.5, ease: 'power3.out' });
+      window.gsap.to(old, { yPercent: -100, duration: 0.5, ease: 'power3.out', onComplete: function () { old.remove(); } });
+    } else if (old) { old.remove(); }
+  }
+  function setCountdown(dd, h, m, s) {
+    if (!rollBox) {
+      ddTxt.innerHTML = '축제까지 <b class="roll" data-k="d"></b>일 <b class="roll" data-k="h"></b>시간 <b class="roll" data-k="m"></b>분 <b class="roll" data-k="s"></b>초';
+      rollBox = {};
+      $$('.roll', ddTxt).forEach(function (b) { rollBox[b.getAttribute('data-k')] = b; });
+    }
+    roll(rollBox.d, String(dd)); roll(rollBox.h, h); roll(rollBox.m, m); roll(rollBox.s, s);
+  }
   function renderDday() {
     var now = Date.now();
     if (now < START) {
@@ -122,13 +143,13 @@
       var m = Math.floor(s / 60); s -= m * 60;
       var cal = daysLeft();
       if (!counting) { ddX.textContent = '-'; ddN.textContent = cal > 0 ? String(cal) : 'DAY'; }
-      ddTxt.innerHTML = '축제까지 <b>' + dd + '</b>일 <b>' + pad2(h) + '</b>시간 <b>' + pad2(m) + '</b>분 <b>' + pad2(s) + '</b>초';
+      setCountdown(dd, pad2(h), pad2(m), pad2(s));
     } else if (now < END) {
       ddX.textContent = '-'; ddN.textContent = 'DAY';
-      ddTxt.innerHTML = '<b>지금 장터가 열려 있어요.</b> 교육관 1층으로 오세요.';
+      rollBox = null; ddTxt.innerHTML = '<b>지금 장터가 열려 있어요.</b> 교육관 1층으로 오세요.';
     } else {
       ddX.textContent = '+'; ddN.textContent = String(Math.max(1, kstDay(now) - kstDay(START)));
-      ddTxt.innerHTML = '축제가 끝났어요. <b>함께해 주셔서 고마워요.</b>';
+      rollBox = null; ddTxt.innerHTML = '축제가 끝났어요. <b>함께해 주셔서 고마워요.</b>';
     }
   }
   renderDday();
@@ -235,6 +256,9 @@
   /* ---------- motion ---------- */
   function initMotion() {
     var gsap = window.gsap, ST = window.ScrollTrigger;
+    window.__gl = window.__gl || {};
+    window.__gl.toast = toast;
+    window.__gl.setCounting = function (v) { counting = v; };
     var plugins = [ST];
     if (window.SplitText) plugins.push(window.SplitText);
     if (window.DrawSVGPlugin) plugins.push(window.DrawSVGPlugin);
@@ -246,6 +270,7 @@
       lenis.on('scroll', ST.update);
       gsap.ticker.add(function (t) { lenis.raf(t * 1000); });
       gsap.ticker.lagSmoothing(0);
+      window.__gl.lenis = lenis;
     }
 
     /* hero intro */
@@ -278,21 +303,56 @@
       .to('.hang', { y: function () { return -window.innerHeight * 0.24; }, ease: 'none' }, 0)
       .to('.hero-info, .hero-kicker', { y: -60, autoAlpha: 0, ease: 'none' }, 0);
 
-    /* headings: masked line reveal */
+    /* envelope: the seal pops, the flap opens, the invitation card rises (pinned + scrubbed) */
+    if ($('.env')) {
+      var envTl = gsap.timeline({ scrollTrigger: { trigger: '.env', start: 'top top', end: '+=150%', pin: true, scrub: 0.6, anticipatePin: 1, refreshPriority: 3 } });
+      envTl.to('.env-hint', { autoAlpha: 0, y: -12, duration: 0.1 }, 0)
+        .to('.env-seal', { scale: 1.25, duration: 0.06, ease: 'power1.out' }, 0)
+        .to('.env-seal', { scale: 0, rotation: 120, autoAlpha: 0, duration: 0.1, ease: 'back.in(2)' }, 0.06)
+        .to('.env-flap', { rotationX: 180, duration: 0.3, ease: 'power2.inOut' }, 0.12)
+        .set('.env-flap', { zIndex: 0 }, 0.27)
+        .to('.env-card', { yPercent: -66, rotation: -2, duration: 0.32, ease: 'power2.out' }, 0.4)
+        .to(['.env-back', '.env-front', '.env-flap'], { yPercent: 60, autoAlpha: 0, duration: 0.24, ease: 'power2.in' }, 0.76)
+        .to('.env-card', { yPercent: -30, rotation: 0, scale: 1.14, duration: 0.24, ease: 'power2.inOut' }, 0.76);
+      window.__gl.env = envTl;
+    }
+
+    /* market: giant kinetic words slide with the scroll (and back when scrolling up) */
+    if ($('.kin')) {
+      gsap.fromTo('.kin', { x: function () { return window.innerWidth * 0.5; } }, { x: function () { return -($('.kin').scrollWidth - window.innerWidth * 0.5); }, ease: 'none', scrollTrigger: { trigger: '.kin', start: 'top bottom', end: 'bottom top', scrub: 0.5, invalidateOnRefresh: true } });
+    }
+
+    /* reveal that remembers direction: scrolling down brings things in from below, scrolling up from above */
+    function dirReveal(targets, trigger, o) {
+      var prop = o.px ? 'y' : 'yPercent', Y = o.y, fade = !!o.fade, dur = o.d || 1.1, stg = o.stagger || 0;
+      function from(v) { var r = {}; r[prop] = v; if (fade) r.autoAlpha = 0; return r; }
+      function to(st) { var r = { duration: dur, ease: 'expo.out', overwrite: true, stagger: st }; r[prop] = 0; if (fade) r.autoAlpha = 1; return r; }
+      function hide(v) { var r = { duration: 0.45, ease: 'power2.in', overwrite: true }; r[prop] = v; if (fade) r.autoAlpha = 0; return r; }
+      gsap.set(targets, from(Y));
+      ST.create({
+        trigger: trigger, start: o.start || 'top 88%', end: o.end || 'bottom 4%',
+        onEnter: function () { gsap.fromTo(targets, from(Y), to(stg)); },
+        onEnterBack: function () { gsap.fromTo(targets, from(-Y), to({ each: stg, from: 'end' })); },
+        onLeave: function () { gsap.to(targets, hide(-Y)); },
+        onLeaveBack: function () { gsap.to(targets, hide(Y)); }
+      });
+    }
+
+    /* headings: masked line reveal, direction-aware */
     $$('.h-txt').forEach(function (el) {
       if (!window.SplitText) return;
       var sp = window.SplitText.create(el, { type: 'lines', mask: 'lines' });
-      gsap.from(sp.lines, { yPercent: 110, duration: 1.15, ease: 'expo.out', stagger: 0.09, scrollTrigger: { trigger: el, start: 'top 88%' } });
+      dirReveal(sp.lines, el, { y: 110, stagger: 0.09, d: 1.15 });
     });
     $$('.sec-en').forEach(function (el) {
       gsap.from(el, { autoAlpha: 0, x: -16, duration: 0.9, ease: 'expo.out', scrollTrigger: { trigger: el, start: 'top 92%' } });
     });
     $$('[data-up]').forEach(function (el) {
-      gsap.from(el, { y: 30, autoAlpha: 0, duration: 1, ease: 'expo.out', scrollTrigger: { trigger: el, start: 'top 92%' } });
+      dirReveal(el, el, { y: 34, px: true, fade: true, start: 'top 92%', d: 1 });
     });
 
     /* invitation letter */
-    gsap.from('.letter p > span', { yPercent: 115, duration: 1.2, ease: 'expo.out', stagger: 0.085, scrollTrigger: { trigger: '.letter', start: 'top 82%' } });
+    dirReveal($$('.letter p > span'), '.letter', { y: 115, stagger: 0.085, start: 'top 82%', end: 'bottom 6%', d: 1.2 });
 
     /* calendar + heart + D-day count */
     gsap.from('.cal-ym b', { yPercent: 40, autoAlpha: 0, duration: 1, ease: 'expo.out', scrollTrigger: { trigger: '.cal', start: 'top 85%' } });
@@ -330,7 +390,7 @@
       gsap.from(first, { y: 160, rotation: function (i) { return i % 2 ? 18 : -18; }, autoAlpha: 0, duration: 1.1, ease: 'expo.out', stagger: 0.08, scrollTrigger: { trigger: '.prog', start: 'top 72%' } });
       var tl = gsap.timeline({
         scrollTrigger: {
-          trigger: '.prog', start: 'top top', pin: true, scrub: 0.7, anticipatePin: 1, invalidateOnRefresh: true,
+          trigger: '.prog', start: 'top top', pin: true, scrub: 0.7, anticipatePin: 1, invalidateOnRefresh: true, refreshPriority: 2,
           end: function () { return '+=' + Math.round(window.innerHeight * 0.95 * (groups.length - 1 + 0.4)); },
           snap: { snapTo: 'labels', inertia: false, duration: { min: 0.2, max: 0.55 }, delay: 0.12, ease: 'power2.inOut' }
         }
@@ -359,33 +419,36 @@
     var cps = $$('.cp');
     if (cps.length) {
       gsap.timeline({ scrollTrigger: { trigger: '.coupons', start: 'top 85%', end: 'bottom 58%', scrub: 0.6, invalidateOnRefresh: true } })
-        .from(cps, { y: function (i) { return -i * (cps[0].offsetHeight + 14) + i * 8; }, rotation: function (i) { return [-2, 5, -7][i] || 0; }, ease: 'power2.out', duration: 1 }, 0)
-        .to($$('.cp-stub'), { rotation: 5, x: 3, ease: 'power2.out', duration: 0.35, stagger: 0.08 }, 0.75);
+        .from(cps, { y: function (i) { return -i * (cps[0].offsetHeight + 14) + i * 8; }, rotation: function (i) { return [-2, 5, -7][i] || 0; }, ease: 'power2.out', duration: 1 }, 0);
     }
 
     /* film frame opens up */
     gsap.fromTo('.film-frame', { scale: 0.78, borderRadius: 64 }, { scale: 1, borderRadius: 22, ease: 'none', scrollTrigger: { trigger: '.film-frame', start: 'top bottom', end: 'center 58%', scrub: 0.4 } });
 
     /* location big type */
-    gsap.from('.map-big .m > span', { yPercent: 110, duration: 1.2, ease: 'expo.out', stagger: 0.1, scrollTrigger: { trigger: '.map-big', start: 'top 86%' } });
+    dirReveal($$('.map-big .m > span'), '.map-big', { y: 110, stagger: 0.1, start: 'top 86%', d: 1.2 });
 
     /* finale: stitches sew L♥VE, the last ones wait for "you" */
     if (stitches.length) {
       var tail = stitches.slice(-4), body = stitches.slice(0, -4);
       gsap.set(stitches, { transformOrigin: '50% 50%' });
-      gsap.timeline({ scrollTrigger: { trigger: '.finale', start: 'top top', end: '+=140%', pin: true, scrub: 0.4, anticipatePin: 1 } })
+      gsap.timeline({ scrollTrigger: { trigger: '.finale', start: 'top top', end: '+=140%', pin: true, scrub: 0.4, anticipatePin: 1, refreshPriority: 1 } })
         .from(body, { scale: 0, autoAlpha: 0, duration: 0.05, stagger: 0.6 / body.length, ease: 'back.out(3)' }, 0)
         .from('.fin-t .m:first-child > span', { yPercent: 110, duration: 0.14, ease: 'power3.out' }, 0.64)
         .from(tail, { scale: 0, autoAlpha: 0, duration: 0.05, stagger: 0.05, ease: 'back.out(4)' }, 0.8)
         .from('.fin-t .m:last-child > span', { yPercent: 110, duration: 0.14, ease: 'power3.out' }, 1.0)
         .from('.fin-s', { autoAlpha: 0, y: 14, duration: 0.12 }, 1.08)
+        .from('.go-btn', { autoAlpha: 0, y: 18, scale: 0.9, duration: 0.12 }, 1.12)
         .to({}, { duration: 0.12 });
     }
 
     /* the thread */
     thread.animate = true;
     ST.addEventListener('refresh', buildThread);
-    ST.create({ trigger: '#page', start: 'top top', end: 'bottom bottom', onUpdate: drawThread });
+    ST.create({ start: 0, end: 'max', onUpdate: drawThread });
+    window.__gl.ready = true;
+    try { document.dispatchEvent(new CustomEvent('gl:motion')); } catch (err) { if (window.console) console.error(err); }
+    ST.sort();
     ST.refresh();
   }
 

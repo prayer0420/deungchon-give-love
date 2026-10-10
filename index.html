@@ -34,12 +34,19 @@
 <script defer src="assets/js/SplitText.min.js"></script>
 <script defer src="assets/js/DrawSVGPlugin.min.js"></script>
 <script defer src="assets/js/lenis.min.js"></script>
+<script defer src="assets/js/Draggable.min.js"></script>
+<script defer src="assets/js/InertiaPlugin.min.js"></script>
+<script defer src="assets/js/Physics2DPlugin.min.js"></script>
+<script defer src="assets/js/ScrambleTextPlugin.min.js"></script>
 <script defer src="assets/js/site.js"></script>
+<script defer src="assets/js/play.js"></script>
 </head>
 <body>
 <a class="skip" href="#invite">초대장 본문으로 건너뛰기</a>
 
+<div class="cur" aria-hidden="true"><i class="cur-dot"></i><i class="cur-ring"><b class="cur-label"></b></i></div>
 <div class="dock">
+  <svg class="dock-ring" viewBox="0 0 54 54" aria-hidden="true" focusable="false"><circle cx="27" cy="27" r="25"/></svg>
   <button class="dock-btn" id="bgmBtn" type="button" aria-pressed="false" aria-label="배경음악 켜기"><svg class="ic" viewBox="0 0 256 256" aria-hidden="true" focusable="false"><path fill="currentColor" d="M212.92,17.69a8,8,0,0,0-6.86-1.45l-128,32A8,8,0,0,0,72,56V166.08A36,36,0,1,0,88,196V110.25l112-28v51.83A36,36,0,1,0,216,164V24A8,8,0,0,0,212.92,17.69ZM52,216a20,20,0,1,1,20-20A20,20,0,0,1,52,216ZM88,93.75V62.25l112-28v31.5ZM180,184a20,20,0,1,1,20-20A20,20,0,0,1,180,184Z"/></svg><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span></button>
 </div>
 <audio id="bgm" loop preload="none" src="assets/audio/bgm.m4a"></audio>
@@ -49,7 +56,7 @@
 
   <header class="hero" id="top">
     <p class="hero-kicker">등촌교회 2청년회 <span aria-hidden="true">·</span> 새생명축제</p>
-    <h1 class="hero-title">
+    <h1 class="hero-title" data-cursor="눌러요">
       <span class="sr">등촌 GIVE LOVE</span>
       <span class="ht-ko m" aria-hidden="true"><span>등촌</span></span>
       <span class="ht-en ht-give m" aria-hidden="true"><span class="c">G</span><span class="c">I</span><span class="c">V</span><span class="c">E</span></span>
@@ -58,7 +65,7 @@
     <div class="hang" aria-hidden="true">
       <div class="hang-drop"><div class="hang-kick"><div class="hang-swing">
         <i class="hang-string"></i>
-        <div class="hang-tag">
+        <div class="hang-tag" data-cursor="흔들기">
           <img src="assets/img/tag-hang.webp" width="440" height="899" alt="" fetchpriority="high" decoding="async">
           <p class="tag-ink"><span class="ti-a">GIVE LOVE</span><span class="ti-b">이 값은<br>사랑이<br>됩니다</span><span class="ti-c">11.07 SAT</span></p>
         </div>
@@ -71,6 +78,18 @@
     </div>
   </header>
 
+  <section class="env" id="envelope" aria-label="초대장 봉투">
+    <div class="env-in">
+      <p class="env-hint" aria-hidden="true">눌러서 열어 보세요</p>
+      <div class="env-box" id="envBox" role="button" tabindex="0" aria-label="초대장 봉투 열기" data-cursor="열기">
+        <div class="env-back"></div>
+        <div class="env-card"><p class="ec-k">Invitation</p><p class="ec-t">초대합니다</p><p class="ec-m">GIVE <b>LOVE</b></p><p class="ec-d">2026.11.07 SAT</p></div>
+        <div class="env-front"></div>
+        <div class="env-flap"><i></i></div>
+        <span class="env-seal" aria-hidden="true">♥</span>
+      </div>
+    </div>
+  </section>
   <section class="sec invite" id="invite" data-thread="R">
     <h2 class="sec-h"><span class="sec-en">Invitation</span><span class="h-txt">초대합니다</span></h2>
     <div class="letter">
@@ -95,7 +114,7 @@
         <h2 class="sec-h"><span class="sec-en">Date</span><span class="h-txt">11월 7일 토요일</span></h2>
         <p class="sec-p" data-up>낮 12시부터 오후 4시까지</p>
         <div class="dday" data-up>
-          <p class="dday-big" id="ddBig" aria-hidden="true"><span class="dd-d">D</span><span class="dd-x" id="ddX">-</span><span class="dd-n" id="ddN">28</span></p>
+          <p class="dday-big" id="ddBig" aria-hidden="true" data-cursor="눌러요"><span class="dd-d">D</span><span class="dd-x" id="ddX">-</span><span class="dd-n" id="ddN">28</span></p>
           <p class="dday-txt" id="ddTxt">2026년 11월 7일 토요일</p>
         </div>
         <div class="btn-row" data-up>
@@ -104,7 +123,7 @@
       </div>
       <div class="cal" role="img" aria-label="2026년 11월 달력. 7일 토요일에 하트 표시">
         <p class="cal-ym"><b>11</b><span>November 2026</span></p>
-        <div class="cal-grid" aria-hidden="true"><span class="dow sun">일</span><span class="dow">월</span><span class="dow">화</span><span class="dow">수</span><span class="dow">목</span><span class="dow">금</span><span class="dow">토</span><span class="d sun">1</span><span class="d">2</span><span class="d">3</span><span class="d">4</span><span class="d">5</span><span class="d">6</span><span class="d on"><b>7</b><svg class="cal-heart" viewBox="0 0 120 110" aria-hidden="true"><path d="M58 99C34 83 9 63 10 39 11 16 40 6 58 30 74 6 107 10 110 37 113 62 86 82 61 100 56 104 49 103 46 98"/></svg></span><span class="d sun">8</span><span class="d">9</span><span class="d">10</span><span class="d">11</span><span class="d">12</span><span class="d">13</span><span class="d">14</span><span class="d sun">15</span><span class="d">16</span><span class="d">17</span><span class="d">18</span><span class="d">19</span><span class="d">20</span><span class="d">21</span><span class="d sun">22</span><span class="d">23</span><span class="d">24</span><span class="d">25</span><span class="d">26</span><span class="d">27</span><span class="d">28</span><span class="d sun">29</span><span class="d">30</span></div>
+        <div class="cal-grid" aria-hidden="true"><span class="dow sun">일</span><span class="dow">월</span><span class="dow">화</span><span class="dow">수</span><span class="dow">목</span><span class="dow">금</span><span class="dow">토</span><span class="d sun">1</span><span class="d">2</span><span class="d">3</span><span class="d">4</span><span class="d">5</span><span class="d">6</span><span class="d on" data-cursor="눌러요"><b>7</b><svg class="cal-heart" viewBox="0 0 120 110" aria-hidden="true"><path d="M58 99C34 83 9 63 10 39 11 16 40 6 58 30 74 6 107 10 110 37 113 62 86 82 61 100 56 104 49 103 46 98"/></svg></span><span class="d sun">8</span><span class="d">9</span><span class="d">10</span><span class="d">11</span><span class="d">12</span><span class="d">13</span><span class="d">14</span><span class="d sun">15</span><span class="d">16</span><span class="d">17</span><span class="d">18</span><span class="d">19</span><span class="d">20</span><span class="d">21</span><span class="d sun">22</span><span class="d">23</span><span class="d">24</span><span class="d">25</span><span class="d">26</span><span class="d">27</span><span class="d">28</span><span class="d sun">29</span><span class="d">30</span></div>
       </div>
     </div>
   </section>
@@ -113,7 +132,7 @@
     <h2 class="sec-h"><span class="sec-en">New Life Festival</span><span class="h-txt">새생명축제</span></h2>
     <p class="fill" id="fillText">새생명축제는 등촌교회가 해마다 11월에 여는 전도 축제예요. 교회 문턱을 낮추고 처음 오는 이웃을 반갑게 맞는 날이에요. 올해 2청년회는 누구나 편하게 들를 수 있는 플리마켓으로 준비했어요.</p>
     <div class="worship">
-      <svg class="clock" viewBox="0 0 200 200" aria-hidden="true" focusable="false">
+      <svg class="clock" viewBox="0 0 200 200" aria-hidden="true" focusable="false" data-cursor="돌리기">
         <circle class="c-face" cx="100" cy="100" r="94"/>
         <g class="c-ticks"><line x1="100" y1="10" x2="100" y2="26" transform="rotate(0 100 100)"/><line x1="100" y1="12" x2="100" y2="20" transform="rotate(30 100 100)"/><line x1="100" y1="12" x2="100" y2="20" transform="rotate(60 100 100)"/><line x1="100" y1="10" x2="100" y2="26" transform="rotate(90 100 100)"/><line x1="100" y1="12" x2="100" y2="20" transform="rotate(120 100 100)"/><line x1="100" y1="12" x2="100" y2="20" transform="rotate(150 100 100)"/><line x1="100" y1="10" x2="100" y2="26" transform="rotate(180 100 100)"/><line x1="100" y1="12" x2="100" y2="20" transform="rotate(210 100 100)"/><line x1="100" y1="12" x2="100" y2="20" transform="rotate(240 100 100)"/><line x1="100" y1="10" x2="100" y2="26" transform="rotate(270 100 100)"/><line x1="100" y1="12" x2="100" y2="20" transform="rotate(300 100 100)"/><line x1="100" y1="12" x2="100" y2="20" transform="rotate(330 100 100)"/></g>
         <line class="c-h" x1="100" y1="100" x2="100" y2="54" transform="rotate(75 100 100)"/>
@@ -129,9 +148,12 @@
     </div>
   </section>
 
+  <div class="tape" aria-hidden="true" data-cursor="빨리!"><div class="tape-track"><div class="tape-seq"><span>GIVE LOVE</span><i>♥</i><span class="ko">등촌 플리마켓</span><i>♥</i><span>11.07 SAT</span><i>♥</i><span class="ko">새생명축제</span><i>♥</i><span>12:00–16:00</span><i>♥</i></div></div></div>
+
   <section class="sec market" id="market" data-thread="L">
     <h2 class="sec-h"><span class="sec-en">Market</span><span class="h-txt">작은 장터가<br>열려요</span></h2>
-    <p class="sec-p" data-up>먹고, 사고, 만들고, 놀고.<br>네 가지 재미가 기다려요.</p>
+    <p class="kin"><span>먹고</span><i>·</i><span>사고</span><i>·</i><span>만들고</span><i>·</i><span class="r">놀고</span></p>
+    <p class="sec-p" data-up>네 가지 재미가 기다려요.</p>
     <div class="mk-waffle"><img src="assets/img/waffle-market.jpg" width="1100" height="1100" alt="와플 칸칸마다 작은 장터 부스와 사람들이 놓인 미니어처" loading="lazy" decoding="async"></div>
   </section>
 
@@ -139,38 +161,38 @@
     <div class="pg pg-0">
       <div class="pg-head"><p class="pg-n">1 / 4</p><h3 class="pg-t">먹거리</h3><p class="pg-l">커피 · 수제 에이드 · 떡볶이 · 와플</p></div>
       <div class="pg-stage">
-        <figure class="obj" style="--x:1%;--y:2%;--w:46%;--r:-5deg"><img src="assets/img/obj-coffee.webp" width="341" height="346" alt="라테 한 잔" loading="lazy" decoding="async"><figcaption>커피</figcaption></figure>
-        <figure class="obj" style="--x:60%;--y:0%;--w:33%;--r:6deg"><img src="assets/img/obj-ade.webp" width="326" height="416" alt="레몬 에이드 한 잔" loading="lazy" decoding="async"><figcaption>수제 에이드</figcaption></figure>
-        <figure class="obj" style="--x:3%;--y:50%;--w:44%;--r:4deg"><img src="assets/img/obj-tteok.webp" width="379" height="381" alt="떡볶이 한 접시" loading="lazy" decoding="async"><figcaption>떡볶이</figcaption></figure>
-        <figure class="obj" style="--x:53%;--y:52%;--w:45%;--r:-8deg"><img src="assets/img/obj-waffle.webp" width="440" height="386" alt="와플" loading="lazy" decoding="async"><figcaption>와플</figcaption></figure>
+        <figure class="obj" style="--x:1%;--y:2%;--w:46%;--r:-5deg"><div class="obj-in" data-cursor="끌기"><img src="assets/img/obj-coffee.webp" width="341" height="346" alt="라테 한 잔" loading="lazy" decoding="async"><figcaption>커피</figcaption></div></figure>
+        <figure class="obj" style="--x:60%;--y:0%;--w:33%;--r:6deg"><div class="obj-in" data-cursor="끌기"><img src="assets/img/obj-ade.webp" width="326" height="416" alt="레몬 에이드 한 잔" loading="lazy" decoding="async"><figcaption>수제 에이드</figcaption></div></figure>
+        <figure class="obj" style="--x:3%;--y:50%;--w:44%;--r:4deg"><div class="obj-in" data-cursor="끌기"><img src="assets/img/obj-tteok.webp" width="379" height="381" alt="떡볶이 한 접시" loading="lazy" decoding="async"><figcaption>떡볶이</figcaption></div></figure>
+        <figure class="obj" style="--x:53%;--y:52%;--w:45%;--r:-8deg"><div class="obj-in" data-cursor="끌기"><img src="assets/img/obj-waffle.webp" width="440" height="386" alt="와플" loading="lazy" decoding="async"><figcaption>와플</figcaption></div></figure>
       </div>
     </div>
     <div class="pg pg-1">
       <div class="pg-head"><p class="pg-n">2 / 4</p><h3 class="pg-t">마켓</h3><p class="pg-l">핸드메이드 굿즈 · 아나바다</p></div>
       <div class="pg-stage">
-        <figure class="obj" style="--x:1%;--y:2%;--w:52%;--r:-8deg"><img src="assets/img/obj-knit.webp" width="228" height="196" alt="빨간 털실로 뜬 하트" loading="lazy" decoding="async"><figcaption>핸드메이드 굿즈</figcaption></figure>
-        <figure class="obj" style="--x:42%;--y:36%;--w:56%;--r:7deg"><img src="assets/img/obj-books.webp" width="376" height="440" alt="손때 묻은 헌책 두 권" loading="lazy" decoding="async"><figcaption>아나바다</figcaption></figure>
+        <figure class="obj" style="--x:1%;--y:2%;--w:52%;--r:-8deg"><div class="obj-in" data-cursor="끌기"><img src="assets/img/obj-knit.webp" width="228" height="196" alt="빨간 털실로 뜬 하트" loading="lazy" decoding="async"><figcaption>핸드메이드 굿즈</figcaption></div></figure>
+        <figure class="obj" style="--x:42%;--y:36%;--w:56%;--r:7deg"><div class="obj-in" data-cursor="끌기"><img src="assets/img/obj-books.webp" width="376" height="440" alt="손때 묻은 헌책 두 권" loading="lazy" decoding="async"><figcaption>아나바다</figcaption></div></figure>
       </div>
     </div>
     <div class="pg pg-2">
       <div class="pg-head"><p class="pg-n">3 / 4</p><h3 class="pg-t">체험</h3><p class="pg-l">향수·디퓨저 DIY · 퍼스널 컬러</p></div>
       <div class="pg-stage">
-        <figure class="obj" style="--x:3%;--y:0%;--w:44%;--r:-5deg"><img src="assets/img/obj-diffuser.webp" width="349" height="424" alt="디퓨저 병" loading="lazy" decoding="async"><figcaption>향수·디퓨저 DIY</figcaption></figure>
-        <figure class="obj" style="--x:34%;--y:52%;--w:64%;--r:6deg"><img src="assets/img/obj-swatch.webp" width="357" height="266" alt="노랑에서 빨강으로 이어지는 컬러 스와치" loading="lazy" decoding="async"><figcaption>퍼스널 컬러</figcaption></figure>
+        <figure class="obj" style="--x:3%;--y:0%;--w:44%;--r:-5deg"><div class="obj-in" data-cursor="끌기"><img src="assets/img/obj-diffuser.webp" width="349" height="424" alt="디퓨저 병" loading="lazy" decoding="async"><figcaption>향수·디퓨저 DIY</figcaption></div></figure>
+        <figure class="obj" style="--x:34%;--y:52%;--w:64%;--r:6deg"><div class="obj-in" data-cursor="끌기"><img src="assets/img/obj-swatch.webp" width="357" height="266" alt="노랑에서 빨강으로 이어지는 컬러 스와치" loading="lazy" decoding="async"><figcaption>퍼스널 컬러</figcaption></div></figure>
       </div>
     </div>
     <div class="pg pg-3">
       <div class="pg-head"><p class="pg-n">4 / 4</p><h3 class="pg-t">놀이</h3><p class="pg-l">성경 퀴즈 · 스탬프 투어 · 영수증 사진기 · 럭키드로우</p></div>
       <div class="pg-stage">
-        <figure class="obj" style="--x:3%;--y:6%;--w:46%;--r:-6deg"><img src="assets/img/obj-receipt.webp" width="191" height="167" alt="돌돌 말린 영수증 사진" loading="lazy" decoding="async"><figcaption>영수증 사진기</figcaption></figure>
-        <figure class="obj" style="--x:50%;--y:36%;--w:44%;--r:6deg"><img src="assets/img/obj-stamp.webp" width="220" height="288" alt="나무 손잡이 도장과 빨간 인주" loading="lazy" decoding="async"><figcaption>스탬프 투어</figcaption></figure>
+        <figure class="obj" style="--x:3%;--y:6%;--w:46%;--r:-6deg"><div class="obj-in" data-cursor="끌기"><img src="assets/img/obj-receipt.webp" width="191" height="167" alt="돌돌 말린 영수증 사진" loading="lazy" decoding="async"><figcaption>영수증 사진기</figcaption></div></figure>
+        <figure class="obj" style="--x:50%;--y:36%;--w:44%;--r:6deg"><div class="obj-in" data-cursor="끌기"><img src="assets/img/obj-stamp.webp" width="220" height="288" alt="나무 손잡이 도장과 빨간 인주" loading="lazy" decoding="async"><figcaption>스탬프 투어</figcaption></div></figure>
       </div>
     </div>
   </section>
 
   <section class="sec give" id="give" data-thread="R">
     <div class="give-in">
-      <div class="give-vis"><img class="stack" src="assets/img/stack.jpg" width="640" height="960" alt="헌책, 니트, 컬러 스와치, 와플, 커피잔이 차곡차곡 쌓인 탑" loading="lazy" decoding="async"></div>
+      <div class="give-vis"><div class="give-wob" data-cursor="흔들기"><img class="stack" src="assets/img/stack.jpg" width="640" height="960" alt="헌책, 니트, 컬러 스와치, 와플, 커피잔이 차곡차곡 쌓인 탑" loading="lazy" decoding="async"></div></div>
       <div class="give-txt">
         <h2 class="sec-h"><span class="sec-en">Give</span><span class="h-txt">나눌수록<br>쌓여요</span></h2>
         <p class="sec-p" data-up>커피 한 잔, 헌책 한 권을 살 때마다 나눔이 한 칸씩 쌓여요.</p>
@@ -183,17 +205,17 @@
     <h2 class="sec-h"><span class="sec-en">Welcome</span><span class="h-txt">처음 오신 분께<br>드려요</span></h2>
     <p class="sec-p" data-up>주차장 입구 웰컴 데스크에 들러 주세요.</p>
     <ul class="coupons">
-      <li class="cp"><div class="cp-main"><span class="cp-k">Free drink</span><b class="cp-t">무료 음료</b><span class="cp-s">음료 한 잔을 드려요</span></div><div class="cp-stub"><span>11.07</span><span>GIVE LOVE</span></div></li>
-      <li class="cp"><div class="cp-main"><span class="cp-k">Class</span><b class="cp-t">체험 쿠폰</b><span class="cp-s">체험 부스에서 쓸 수 있어요</span></div><div class="cp-stub"><span>11.07</span><span>GIVE LOVE</span></div></li>
-      <li class="cp"><div class="cp-main"><span class="cp-k">Lucky draw</span><b class="cp-t">럭키드로우 응모권</b><span class="cp-s">추첨에 응모할 수 있어요</span></div><div class="cp-stub"><span>11.07</span><span>GIVE LOVE</span></div></li>
+      <li class="cp" role="button" tabindex="0" data-cursor="뜯기"><div class="cp-main"><span class="cp-k">Free drink</span><b class="cp-t">무료 음료</b><span class="cp-s">음료 한 잔을 드려요</span><span class="cp-stamp" aria-hidden="true">받았어요</span></div><div class="cp-stub"><span>11.07</span><span>GIVE LOVE</span></div></li>
+      <li class="cp" role="button" tabindex="0" data-cursor="뜯기"><div class="cp-main"><span class="cp-k">Class</span><b class="cp-t">체험 쿠폰</b><span class="cp-s">체험 부스에서 쓸 수 있어요</span><span class="cp-stamp" aria-hidden="true">받았어요</span></div><div class="cp-stub"><span>11.07</span><span>GIVE LOVE</span></div></li>
+      <li class="cp" role="button" tabindex="0" data-cursor="뜯기"><div class="cp-main"><span class="cp-k">Lucky draw</span><b class="cp-t">럭키드로우 응모권</b><span class="cp-s">추첨에 응모할 수 있어요</span><span class="cp-stamp" aria-hidden="true">받았어요</span></div><div class="cp-stub"><span>11.07</span><span>GIVE LOVE</span></div></li>
     </ul>
   </section>
 
   <section class="sec film" id="film" data-thread="R">
     <h2 class="sec-h"><span class="sec-en">Preview</span><span class="h-txt">종이 인형들은<br>벌써 와 있어요</span></h2>
-    <figure class="film-frame">
+    <div class="film-tilt" data-cursor="멈춤"><figure class="film-frame">
       <video id="dolls" muted loop playsinline preload="none" poster="assets/img/dolls-poster.jpg" aria-label="종이 인형들이 장터 부스 사이를 걸어가는 짧은 영상"><source src="assets/video/dolls.mp4" type="video/mp4"></video>
-    </figure>
+    </figure><span class="film-badge" aria-hidden="true"></span></div>
     <p class="sec-p" data-up>11월 7일, 이번엔 당신 차례예요.</p>
   </section>
 
@@ -222,9 +244,11 @@
 
   <section class="finale" id="finale">
     <div class="fin-in">
-      <svg class="stitch" id="stitch" aria-hidden="true" focusable="false"></svg>
+      <svg class="stitch" id="stitch" aria-hidden="true" focusable="false" data-cursor="콕"></svg>
       <p class="fin-t"><span class="m"><span>당신이 오면</span></span><span class="m"><span>완성돼요</span></span></p>
       <p class="fin-s">11월 7일 토요일, 등촌교회에서 기다릴게요.</p>
+      <button class="btn btn-solid go-btn" id="goBtn" type="button"><span>갈게요 ♥</span></button>
+      <p class="go-note" id="goNote" aria-live="polite"></p>
     </div>
   </section>
 </main>
