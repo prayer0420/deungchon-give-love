@@ -1,4 +1,4 @@
-/* 등촌 GIVE LOVE · app.js (v14)
+/* 등촌 GIVE LOVE · app.js (v15, rules in DESIGN.md)
    One screen, many scenes. Wheel, swipe, arrow keys and the next button change the scene in place;
    the page itself never scrolls. Without GSAP the page stays a plain stacked document,
    and reduced-motion users get short fades. */
@@ -128,7 +128,7 @@
       var m = Math.floor(s / 60); s -= m * 60;
       if (!rollBox) {
         msgNow = '';
-        ddTxt.innerHTML = '<b class="roll" data-k="d"></b>일 <b class="roll" data-k="h"></b>시간 <b class="roll" data-k="m"></b>분 <b class="roll" data-k="s"></b>초 남았어요';
+        ddTxt.innerHTML = '<span class="cd"><b class="roll" data-k="d"></b><small>일</small><b class="roll" data-k="h"></b><small>시간</small><b class="roll" data-k="m"></b><small>분</small><b class="roll" data-k="s"></b><small>초</small></span><span class="cd-l">남았어요</span>';
         rollBox = {};
         $$('.roll', ddTxt).forEach(function (b) { rollBox[b.getAttribute('data-k')] = b; });
       }
@@ -192,16 +192,18 @@
   var NAMES = ['표지', '초대', '새생명축제', '날짜', '프로그램', '오시는 길', '함께 가요'];
   var SC = {};
   SCENES.forEach(function (k) { SC[k] = $('#s-' + k); });
+  /* where the tag hangs: hero = the cover spot, side = small at top right, left = small at top left,
+     low = under the big date, fin = between the closing words and the buttons, up = pulled out of view */
   var STEPS = [
     { sc: 'cover', tag: 'hero', ink: 0 },
     { sc: 'invite', tag: 'side', ink: 1 },
-    { sc: 'about', tag: 'side', ink: 2 },
-    { sc: 'when', tag: 'side', ink: 3 },
+    { sc: 'about', tag: 'left', ink: 2 },
+    { sc: 'when', tag: 'low', ink: 3 },
     { sc: 'prog', tag: 'up', item: 0 },
     { sc: 'prog', tag: 'up', item: 1 },
     { sc: 'prog', tag: 'up', item: 2 },
     { sc: 'place', tag: 'side', ink: 4 },
-    { sc: 'final', tag: 'side', ink: 5 }
+    { sc: 'final', tag: 'fin', ink: 5 }
   ];
   var LAST = STEPS.length - 1;
   var INK = [
@@ -209,14 +211,15 @@
     { a: 'INVITATION', b: '편히<br>오세요', c: '11.15 SUN' },
     { a: 'NEW LIFE', b: '처음<br>오셔도<br>좋아요', c: 'FESTIVAL' },
     { a: 'SUNDAY', b: null, c: '2:30 PM' },
-    { a: 'PLACE', b: '등촌<br>교회<br>본당', c: '2:30 PM' },
-    { a: 'SEE YOU', b: '그날<br>만나요', c: '11.15 SUN' }
+    { a: 'PLACE', b: '여기서<br>만나요', c: '2:30 PM' },
+    { a: 'SEE YOU', b: '그날<br>만나요', c: '11.15 SUN' },
+    { a: 'SEE YOU', b: '기다리고<br>있을게요', c: '11.15 SUN' }
   ];
-  var items = $$('#s-prog .it'), objs = $$('.obj img');
-  var hang = $('#hang'), move = $('#hangMove'), drop = $('#hangDrop'), kick = $('#hangKick'), swing = $('#hangSwing'), tag = $('#tag'), ink = $('#ink');
+  var items = $$('#s-prog .it'), objs = $$('.obj img'), plis = $$('.pl li'), plBar = $('.pl-bar');
+  var hang = $('#hang'), move = $('#hangMove'), drop = $('#hangDrop'), kick = $('#hangKick'), wind = $('#hangWind'), swing = $('#hangSwing'), tag = $('#tag'), ink = $('#ink');
   var inkA = $('#inkA'), inkB = $('#inkB'), inkC = $('#inkC');
   var cNow = $('#cNow'), rail = $('#railFill'), nextBtn = $('#nextBtn'), nextLabel = $('#nextLabel'), hint = $('#hint'), live = $('#live');
-  var cur = 0, busy = false, inkNow = 0, tagMode = 'hero', hinted = false, geo = null;
+  var cur = 0, busy = false, inkNow = 0, tagMode = 'hero', hinted = false, geo = null, lay = { low: null, fin: null };
 
   function show(el, on) {
     el.style.visibility = on ? 'visible' : 'hidden';
@@ -227,6 +230,7 @@
   function fades(el) { return $$('.fd', el).filter(function (x) { return !x.closest('.it'); }); }
 
   /* the tag: what it says, where it hangs */
+  function inkFor(s) { return s.ink === 5 && goBtn.classList.contains('is-going') ? 6 : s.ink; }
   function setInk(i) {
     var f = INK[i];
     inkNow = i;
@@ -246,19 +250,43 @@
     geo = { holeX: hr.left + tag.offsetWidth * 0.432, holeY: hr.top + tag.offsetTop, w: tag.offsetWidth, h: tag.offsetHeight };
   }
   function split() { return window.innerWidth > window.innerHeight * 1.1; }
+  function eff(mode) { return split() && mode === 'left' ? 'up' : mode; }
+  function padPx() { return parseFloat(getComputedStyle(bar).paddingLeft) || 24; }
+  var probe = document.createElement('i');
+  probe.style.cssText = 'position:absolute;left:0;top:0;width:var(--tagW);height:0;visibility:hidden;pointer-events:none';
+  stage.appendChild(probe);
+  function sideW() { return probe.getBoundingClientRect().width || Math.min(window.innerWidth * 0.3, window.innerHeight * 0.125); }
+  function pageY(el) { var y = 0; while (el && el !== stage) { y += el.offsetTop; el = el.offsetParent; } return y; }
+  /* in the date and closing scenes the tag hangs where the words leave room, so measure the words.
+     The card is 0.418 tw left of the string and 1.955 tw tall; the idle swing moves it about 0.038 px per px of height. */
+  function layout() {
+    if (split()) { SC.when.style.removeProperty('--infoMax'); SC.final.style.removeProperty('--finMax'); return; }
+    var W = window.innerWidth, pad = padPx(), ft = window.innerHeight - ctrl.offsetHeight;
+    var wd = $('.when-d', SC.when), dB = pageY(wd) + wd.offsetHeight;
+    var tw = Math.max(64, Math.min(W * 0.32, (ft - 8 - dB - 14) / 2.043));
+    lay.low = { cx: W - pad - tw * 0.568, cy: dB + 14, tw: tw };
+    SC.when.style.setProperty('--infoMax', Math.round(Math.max(150, lay.low.cx - tw * 0.418 - ft * 0.0384 - 12 - pad)) + 'px');
+    /* closing: if the tag fits above the full-width line, hang it there; otherwise let the line wrap beside it */
+    var hf = $('.h-fin', SC.final), hB = pageY(hf) + hf.offsetHeight, aT = pageY($('.fin-b .acts', SC.final)), gp = $('#goTxt');
+    SC.final.style.removeProperty('--finMax');
+    var pT = pageY(gp), cap = W * 0.4;
+    var tA = Math.min(cap, (pT - 12 - hB - 14) / 2.043), tB = Math.min(cap, (aT - 14 - hB - 14) / 2.043);
+    var tf = Math.max(64, tA >= tB * 0.86 ? tA : tB);
+    lay.fin = { cx: W - pad - tf * 0.568, cy: hB + 14, tw: tf };
+    if (tf > tA + 0.5) SC.final.style.setProperty('--finMax', Math.round(Math.max(150, lay.fin.cx - tf * 0.418 - (hB + 14 + tf * 1.955) * 0.0384 - 12 - pad)) + 'px');
+  }
+  function at(cx, cy, tw) { return { x: cx - geo.holeX, y: cy - geo.holeY, scale: tw / geo.w }; }
+  function upFrom(t) { t.y -= geo.holeY + t.y + geo.h * t.scale + 40; return t; }
   function target(mode) {
+    mode = eff(mode);
     if (!geo || mode === 'hero') return { x: 0, y: 0, scale: 1 };
-    var W = window.innerWidth, H = window.innerHeight, t;
-    if (split()) {
-      t = { x: 0, y: H * 0.02, scale: 0.86 };
-    } else {
-      var tw = Math.min(W * 0.38, H * (H <= 640 ? 0.12 : 0.155)), s = tw / geo.w;
-      var padL = parseFloat(getComputedStyle(bar).paddingLeft) || 24;
-      var hx = W - padL - tw * (1 - 0.432), hy = bar.getBoundingClientRect().bottom + 8;
-      t = { x: hx - geo.holeX, y: hy - geo.holeY, scale: s };
-    }
-    if (mode === 'up') { var hy2 = geo.holeY + t.y; t.y -= hy2 + geo.h * t.scale + 40; }
-    return t;
+    if (split()) { var t0 = { x: 0, y: window.innerHeight * 0.02, scale: 0.86 }; return mode === 'up' ? upFrom(t0) : t0; }
+    var W = window.innerWidth, pad = padPx(), top = bar.getBoundingClientRect().bottom + 8, tw = sideW();
+    if (mode === 'left') return at(pad + tw * 0.432, top, tw);
+    if (mode === 'low' && lay.low) return at(lay.low.cx, lay.low.cy, lay.low.tw);
+    if (mode === 'fin' && lay.fin) return at(lay.fin.cx, lay.fin.cy, lay.fin.tw);
+    var side = at(W - pad - tw * 0.568, top, tw);
+    return mode === 'up' ? upFrom(side) : side;
   }
   function flipTo(i) {
     return gsap.timeline()
@@ -273,23 +301,98 @@
       .to(kick, { rotation: 0, duration: 2.6, ease: 'elastic.out(1, 0.3)' });
   }
   function tagTo(n, dir) {
-    var s = STEPS[n], t = target(s.tag), tl = gsap.timeline(), wasUp = tagMode === 'up';
-    var newInk = s.ink !== undefined && s.ink !== inkNow;
+    var s = STEPS[n], t = target(s.tag), tl = gsap.timeline(), mode = eff(s.tag), was = eff(tagMode);
+    var ni = inkFor(s), newInk = ni !== undefined && ni !== inkNow;
+    var W = window.innerWidth, H = window.innerHeight, wide = split();
     tagMode = s.tag;
     if (calm) {
       tl.set(move, { x: t.x, y: t.y, scale: t.scale });
-      if (newInk) tl.to(ink, { opacity: 0, duration: 0.12 }, 0).call(setInk, [s.ink]).to(ink, { opacity: 1, duration: 0.18 });
+      if (newInk) tl.to(ink, { opacity: 0, duration: 0.12 }, 0).call(setInk, [ni]).to(ink, { opacity: 1, duration: 0.18 });
       return tl;
     }
-    if (wasUp && newInk) setInk(s.ink);
-    tl.to(move, { x: t.x, y: t.y, scale: t.scale, duration: s.tag === 'up' || wasUp ? 1.15 : 1.05, ease: s.tag === 'up' ? 'power3.inOut' : 'expo.inOut' }, 0);
-    if (!wasUp && s.tag !== 'up' && newInk) tl.add(flipTo(s.ink), 0.16);
-    if (s.tag === 'hero' && !split()) {
+    if (was === 'up' && newInk) setInk(ni);
+    /* on upright screens the tag never crosses words on its way. It leaves by an empty route (up from the top corners,
+       out to the right from the spots beside words), changes its words out of sight, and comes back in from the right
+       (spots beside words) or from above (top corners). */
+    var tight = !wide && (mode === 'low' || mode === 'fin') && was !== mode;
+    var back = !wide && (mode === 'side' || mode === 'left') && (was === 'low' || was === 'fin');
+    var outUp = !wide && mode === 'up' && was === 'fin';
+    if (tight || back || outUp) {
+      var off = 0;
+      if (was === 'side' || was === 'left') { tl.to(move, { y: '-=' + Math.round(H * 0.6), duration: 0.36, ease: 'power2.in' }, 0); off = 0.36; }
+      else if (was !== 'up') { tl.to(move, { x: '+=' + Math.round(W * 0.7), duration: 0.36, ease: 'power2.in' }, 0); off = 0.36; }
+      if (newInk && was !== 'up') tl.call(setInk, [ni], null, off);
+      if (outUp) return tl.set(move, { x: t.x, y: t.y, scale: t.scale }, off);
+      var at = Math.max(0.32, off + 0.04);
+      if (tight) {
+        tl.set(move, { x: t.x + W * 0.62, y: t.y, scale: t.scale }, off)
+          .to(move, { x: t.x, duration: 0.95, ease: 'expo.out' }, at)
+          .fromTo(kick, { rotation: -7 }, { rotation: 0, duration: 1.5, ease: 'power2.out' }, at);
+      } else {
+        tl.set(move, { x: t.x, y: t.y - H * 0.55, scale: t.scale }, off)
+          .to(move, { y: t.y, duration: 0.9, ease: 'expo.out' }, at)
+          .add(nudge(dir), at + 0.06);
+      }
+      return tl;
+    }
+    var big = mode === 'hero' || was === 'hero', lift = mode === 'up' || was === 'up';
+    /* between scenes the tag is in place before the new words arrive */
+    tl.to(move, { x: t.x, y: t.y, scale: t.scale, duration: big ? 1.05 : lift && !wide ? 0.95 : 0.55, ease: big ? 'expo.inOut' : lift && !wide ? 'power3.inOut' : 'power2.inOut' }, wide && was === 'up' ? 0.34 : 0);
+    if (was !== 'up' && mode !== 'up' && newInk) tl.add(flipTo(ni), 0.16);
+    if (mode === 'hero' && !wide) {
       /* phones: the way home crosses the title, so the card bows out to the right until it is below LOVE, and it does not swing toward the words */
-      tl.to(drop, { x: Math.round(window.innerWidth * 0.12), duration: 0.4, ease: 'power2.out' }, 0)
+      tl.to(drop, { x: Math.round(W * 0.12), duration: 0.4, ease: 'power2.out' }, 0)
         .to(drop, { x: 0, duration: 0.45, ease: 'power2.inOut' }, 0.8);
     } else tl.add(nudge(dir), 0.05);
     return tl;
+  }
+
+  /* about: the band runs on its own and leans into every scroll or swipe, in that direction */
+  var bandT = $('#bandT'), band = { x: 0, v: 1, half: 0, live: false };
+  function bandMeasure() { band.half = bandT.scrollWidth / 2; }
+  gsap.ticker.add(function (time, dt) {
+    if (!band.live || !band.half) return;
+    band.x -= band.v * Math.max(36, window.innerWidth * 0.08) * Math.min(dt, 64) / 1000;
+    if (band.x <= -band.half) band.x += band.half;
+    else if (band.x > 0) band.x -= band.half;
+    gsap.set(bandT, { x: band.x });
+  });
+  function bandPush(dv) {
+    if (calm || !band.live) return;
+    band.v = Math.max(-14, Math.min(14, band.v + dv));
+    gsap.to(band, { v: band.v < 0 ? -1 : 1, duration: 1.6, ease: 'power2.out' });
+  }
+
+  /* when: each digit of 11.15 is a window onto a strip of digits that rolls into place */
+  var dgs = $$('.dg', SC.when), dgReady = false;
+  function buildDigits() {
+    if (dgReady) return true;
+    if (document.fonts && document.fonts.status !== 'loaded') return false;
+    dgReady = true;
+    dgs.forEach(function (g, i) {
+      var v = +g.textContent, fs = parseFloat(getComputedStyle(g).fontSize) || 100, n = 11 + v + (i % 2 ? 10 : 0), h = '';
+      g.style.width = (g.getBoundingClientRect().width / fs).toFixed(4) + 'em';
+      for (var k = 0; k < n; k++) h += '<i>' + (k % 10) + '</i>';
+      g.innerHTML = '<span class="st">' + h + '</span>';
+      g.setAttribute('data-n', n);
+    });
+    return true;
+  }
+  function rollDate() {
+    var tl = gsap.timeline(), dd = $('.dd', SC.when);
+    if (!buildDigits()) return tl.fromTo(dd, { yPercent: 108 }, { yPercent: 0, duration: 1.05, ease: 'expo.out' }, 0);
+    tl.fromTo(dd, { yPercent: 18 }, { yPercent: 0, duration: 0.9, ease: 'expo.out' }, 0);
+    $$('.st', SC.when).forEach(function (st, i) {
+      var n = +st.parentNode.getAttribute('data-n');
+      tl.fromTo(st, { yPercent: 0 }, { yPercent: -100 * (n - 1) / n, duration: 1.1 + i * 0.12, ease: 'expo.out' }, i * 0.05);
+    });
+    return tl;
+  }
+
+  /* programme: the list marks where you are */
+  function setList(i, instant) {
+    plis.forEach(function (li, k) { if (k === i) li.setAttribute('aria-current', 'true'); else li.removeAttribute('aria-current'); });
+    if (plBar && plis[i]) gsap.to(plBar, { y: plis[i].offsetTop, duration: instant || calm ? 0 : 0.7, ease: 'expo.out' });
   }
 
   /* scenes */
@@ -311,6 +414,12 @@
       if (ls.length) tl.to(ls, { yPercent: -108 * dir, duration: 0.36, ease: 'power2.in', stagger: { amount: 0.07 } }, 0);
       if (fs.length) tl.to(fs, { autoAlpha: 0, y: -14 * dir, duration: 0.28, ease: 'power2.in', stagger: { amount: 0.06 } }, 0);
       if (name === 'prog') tl.add(leaveItem(step.item, dir), 0);
+      if (name === 'about') {
+        tl.to(band, { v: 12 * dir, duration: 0.4, ease: 'power2.in' }, 0)
+          .to('.band', { autoAlpha: 0, duration: 0.32, ease: 'power2.in' }, 0)
+          .call(function () { band.live = false; }, null, 0.42);
+      }
+      if (name === 'place') tl.to('.pc-line', { scaleX: 0, transformOrigin: '100% 50%', duration: 0.3, ease: 'power2.in' }, 0);
     }
     return tl.call(show, [el, false]);
   }
@@ -329,17 +438,31 @@
         .fromTo('.cv-ko > span', { yPercent: 110 * dir }, { yPercent: 0, duration: 1, ease: 'expo.out' }, 0)
         .fromTo($$('.cv-info .ln > span'), { yPercent: 110 * dir }, { yPercent: 0, duration: 1, ease: 'expo.out', stagger: 0.06 }, 0.1)
         .fromTo($$('.cv-info .fd'), { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.8 }, 0.2);
-    } else {
-      var ln = lines(el), fd = fades(el);
-      if (ln.length) tl.fromTo(ln, { yPercent: 108 * dir }, { yPercent: 0, duration: 1.05, ease: 'expo.out', stagger: 0.06 }, 0);
-      if (fd.length) tl.fromTo(fd, { autoAlpha: 0, y: 26 * dir }, { autoAlpha: 1, y: 0, duration: 0.9, ease: 'expo.out', stagger: 0.07 }, 0.12);
-      if (name === 'prog') tl.add(enterItem(step.item, dir), 0.04);
+      return tl;
     }
+    var ln = lines(el).filter(function (s) { return !s.classList.contains('dd') && !s.classList.contains('sr'); });
+    var words = ln.filter(function (s) { return s.querySelector('.wd'); });
+    var plain = ln.filter(function (s) { return !s.querySelector('.wd'); });
+    var fd = fades(el), wds = $$('.wd', el);
+    if (plain.length) tl.fromTo(plain, { yPercent: 108 * dir }, { yPercent: 0, duration: 1.05, ease: 'expo.out', stagger: 0.06 }, 0);
+    /* the letter is read word by word */
+    if (words.length) tl.set(words, { yPercent: 0 }, 0).fromTo(wds, { yPercent: 112 * dir }, { yPercent: 0, duration: 0.95, ease: 'expo.out', stagger: 0.085 }, 0.06);
+    if (fd.length) tl.fromTo(fd, { autoAlpha: 0, y: 26 * dir }, { autoAlpha: 1, y: 0, duration: 0.9, ease: 'expo.out', stagger: 0.07 }, wds.length ? 0.5 : 0.12);
+    if (name === 'invite') tl.fromTo('.lt-u', { scaleX: 0 }, { scaleX: 1, duration: 0.75, ease: 'power3.inOut' }, 0.62);
+    if (name === 'about') {
+      band.live = true;
+      band.v = 10 * dir;
+      tl.to(band, { v: dir, duration: 1.8, ease: 'power3.out' }, 0)
+        .fromTo('.band', { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.45, ease: 'power1.out' }, 0);
+    }
+    if (name === 'when') tl.add(rollDate(), 0.02);
+    if (name === 'place') tl.fromTo('.pc-line', { scaleX: 0, transformOrigin: '0% 50%' }, { scaleX: 1, duration: 0.9, ease: 'expo.inOut' }, 0.3);
+    if (name === 'prog') tl.add(enterItem(step.item, dir), 0.04);
     return tl;
   }
   function enterItem(i, dir) {
     var it = items[i], o = objs[i], tl = gsap.timeline();
-    tl.call(show, [it, true], null, 0);
+    tl.call(show, [it, true], null, 0).call(setList, [i], null, 0);
     if (calm) return tl.fromTo([it, o], { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.3 }, 0);
     return tl.fromTo($$('.ln > span', it), { yPercent: 108 * dir }, { yPercent: 0, duration: 1, ease: 'expo.out', stagger: 0.07 }, 0)
       .fromTo($$('.fd', it), { autoAlpha: 0, y: 20 * dir }, { autoAlpha: 1, y: 0, duration: 0.8, ease: 'expo.out' }, 0.14)
@@ -404,11 +527,13 @@
   window.addEventListener('wheel', function (e) {
     if (menuOpen()) return;
     e.preventDefault();
+    var px = e.deltaY * (e.deltaMode === 1 ? 33 : e.deltaMode === 2 ? window.innerHeight : 1);
+    if (STEPS[cur].sc === 'about') bandPush(px * 0.02);
     var now = performance.now();
     if (busy || now < quietUntil) { quietUntil = now + 200; wheelAcc = 0; return; }
     if (now - lastWheel > 260) wheelAcc = 0;
     lastWheel = now;
-    wheelAcc += e.deltaY * (e.deltaMode === 1 ? 33 : e.deltaMode === 2 ? window.innerHeight : 1);
+    wheelAcc += px;
     if (Math.abs(wheelAcc) >= 36) {
       var dir = wheelAcc > 0 ? 1 : -1;
       wheelAcc = 0;
@@ -421,13 +546,16 @@
   stage.addEventListener('touchstart', function (e) {
     if (e.touches.length !== 1) { touch = null; return; }
     var p = e.touches[0];
-    touch = { x: p.clientX, y: p.clientY, t: performance.now(), el: $('.sc-in', SC[STEPS[cur].sc]) };
+    touch = { x: p.clientX, y: p.clientY, ly: p.clientY, t: performance.now(), el: $('.sc-in', SC[STEPS[cur].sc]) };
   }, { passive: true });
   stage.addEventListener('touchmove', function (e) {
     if (!touch) return;
     e.preventDefault();
+    var y = e.touches[0].clientY;
+    if (STEPS[cur].sc === 'about') bandPush((touch.ly - y) * 0.08);
+    touch.ly = y;
     if (busy || calm) return;
-    var dy = e.touches[0].clientY - touch.y;
+    var dy = y - touch.y;
     gsap.set(touch.el, { y: Math.max(-40, Math.min(40, dy * 0.22)) });
   }, { passive: false });
   function endTouch(e) {
@@ -459,11 +587,40 @@
       .to(kick, { rotation: Math.random() < 0.5 ? -14 : 14, duration: 0.25, ease: 'power2.out' })
       .to(kick, { rotation: 0, duration: 3, ease: 'elastic.out(1, 0.3)' });
   });
+  /* 갈게요: the tag answers */
+  goBtn.addEventListener('click', function () {
+    if (STEPS[cur].sc !== 'final' || inkNow === 6) return;
+    if (calm) { setInk(6); return; }
+    gsap.timeline().add(flipTo(6), 0)
+      .to(kick, { rotation: -9, duration: 0.3, ease: 'power2.out' }, 0.05)
+      .to(kick, { rotation: 0, duration: 2.6, ease: 'elastic.out(1, 0.3)' }, 0.35);
+  });
+
+  /* on a computer the tag sways when the mouse moves past it, like a draft (wide layouts only, where it hangs far from the words) */
+  if (!calm && window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    var wx = null, wt = 0, push = 0, ang = 0, vel = 0;
+    window.addEventListener('pointermove', function (e) {
+      if (e.pointerType && e.pointerType !== 'mouse') return;
+      var t = performance.now();
+      if (wx !== null && t > wt) push += (e.clientX - wx) / Math.max(8, t - wt);
+      wx = e.clientX; wt = t;
+    }, { passive: true });
+    gsap.ticker.add(function () {
+      if (!split() || menuOpen()) push = 0;
+      if (!push && !ang && !vel) return;
+      vel = (vel - push * 0.22 - ang * 0.035) * 0.9;
+      push *= 0.6;
+      ang = Math.max(-6, Math.min(6, ang + vel));
+      if (Math.abs(ang) < 0.02 && Math.abs(vel) < 0.02 && Math.abs(push) < 0.01) { ang = 0; vel = 0; push = 0; }
+      gsap.set(wind, { rotation: ang });
+    });
+  }
 
   var rT = 0;
+  function relayout() { measure(); layout(); bandMeasure(); if (!busy) gsap.set(move, target(STEPS[cur].tag)); }
   window.addEventListener('resize', function () {
     clearTimeout(rT);
-    rT = setTimeout(function () { measure(); gsap.set(move, target(STEPS[cur].tag)); }, 120);
+    rT = setTimeout(relayout, 120);
   });
 
   /* start */
@@ -473,10 +630,16 @@
   gsap.set(objs, { autoAlpha: 0 });
   setInk(0);
   measure();
+  layout();
+  bandMeasure();
+  setList(0, true);
   frame(0, 1);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(relayout);
   if (calm) {
     d.classList.add('ready');
   } else {
+    gsap.set('.lt-u, .pc-line', { scaleX: 0 });
+    gsap.set('.band', { autoAlpha: 0 });
     gsap.set($$('.cv-ko > span, .cv-en .c, .cv-info .ln > span'), { yPercent: 110 });
     gsap.set($$('.cv-info .fd'), { autoAlpha: 0, y: 14 });
     gsap.set(drop, { y: -window.innerHeight, rotation: -24 });
@@ -497,4 +660,3 @@
   if (HASH[h0]) gsap.delayedCall(calm ? 0.1 : 1.3, function () { go(HASH[h0]); });
   window.__deck = { go: go, cur: function () { return cur; }, busy: function () { return busy; }, steps: STEPS.length };
 })();
-

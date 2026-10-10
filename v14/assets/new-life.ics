@@ -1,0 +1,23 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Deungchon Church 2nd Young Adults//GIVE LOVE//KO
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:new-life-20261115@deungchon-2ya
+DTSTAMP:20261010T000000Z
+DTSTART:20261115T053000Z
+DTEND:20261115T073000Z
+SUMMARY:등촌교회 새생명축제
+LOCATION:등촌교회 본당\, 서울 양천구 목동중앙북로8길 49
+DESCRIPTION:등촌교회 2청년회가 초대하는 새생명축제예요.\
+ n오후 2시 30분에 시작해요. 무언극과 난타 공연을 준비
+ 했어요.\nhttps://prayer0420.github.io/deungchon-give-love/
+URL:https://prayer0420.github.io/deungchon-give-love/
+BEGIN:VALARM
+TRIGGER:-PT2H
+ACTION:DISPLAY
+DESCRIPTION:오늘 오후 2시 30분\, 새생명축제
+END:VALARM
+END:VEVENT
+END:VCALENDAR
