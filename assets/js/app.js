@@ -284,7 +284,11 @@
     if (wasUp && newInk) setInk(s.ink);
     tl.to(move, { x: t.x, y: t.y, scale: t.scale, duration: s.tag === 'up' || wasUp ? 1.15 : 1.05, ease: s.tag === 'up' ? 'power3.inOut' : 'expo.inOut' }, 0);
     if (!wasUp && s.tag !== 'up' && newInk) tl.add(flipTo(s.ink), 0.16);
-    tl.add(nudge(dir), 0.05);
+    if (s.tag === 'hero' && !split()) {
+      /* phones: the way home crosses the title, so the card bows out to the right until it is below LOVE, and it does not swing toward the words */
+      tl.to(drop, { x: Math.round(window.innerWidth * 0.12), duration: 0.4, ease: 'power2.out' }, 0)
+        .to(drop, { x: 0, duration: 0.45, ease: 'power2.inOut' }, 0.8);
+    } else tl.add(nudge(dir), 0.05);
     return tl;
   }
 
@@ -297,15 +301,15 @@
       return tl.call(show, [el, false]).set(el, { opacity: 1 });
     }
     if (name === 'cover') {
-      tl.to('.cv-give .w', { xPercent: -22, autoAlpha: 0, duration: 0.7, ease: 'power3.in' }, 0)
-        .to('.cv-love .w', { xPercent: 18, autoAlpha: 0, duration: 0.7, ease: 'power3.in' }, 0.04)
-        .to('.cv-ko > span', { yPercent: -110 * dir, duration: 0.55, ease: 'power3.in' }, 0)
-        .to($$('.cv-info .ln > span'), { yPercent: -110 * dir, duration: 0.5, ease: 'power3.in', stagger: 0.03 }, 0)
-        .to($$('.cv-info .fd'), { autoAlpha: 0, duration: 0.4, ease: 'power2.in' }, 0);
+      tl.to('.cv-give .w', { xPercent: -14, autoAlpha: 0, duration: 0.4, ease: 'power2.in' }, 0)
+        .to('.cv-love .w', { xPercent: 12, autoAlpha: 0, duration: 0.4, ease: 'power2.in' }, 0.03)
+        .to('.cv-ko > span', { yPercent: -110 * dir, duration: 0.36, ease: 'power2.in' }, 0)
+        .to($$('.cv-info .ln > span'), { yPercent: -110 * dir, duration: 0.36, ease: 'power2.in', stagger: 0.03 }, 0)
+        .to($$('.cv-info .fd'), { autoAlpha: 0, duration: 0.28, ease: 'power2.in' }, 0);
     } else {
       var ls = lines(el), fs = fades(el);
-      if (ls.length) tl.to(ls, { yPercent: -108 * dir, duration: 0.55, ease: 'power3.in', stagger: 0.035 }, 0);
-      if (fs.length) tl.to(fs, { autoAlpha: 0, y: -22 * dir, duration: 0.45, ease: 'power2.in', stagger: 0.025 }, 0);
+      if (ls.length) tl.to(ls, { yPercent: -108 * dir, duration: 0.36, ease: 'power2.in', stagger: { amount: 0.07 } }, 0);
+      if (fs.length) tl.to(fs, { autoAlpha: 0, y: -14 * dir, duration: 0.28, ease: 'power2.in', stagger: { amount: 0.06 } }, 0);
       if (name === 'prog') tl.add(leaveItem(step.item, dir), 0);
     }
     return tl.call(show, [el, false]);
@@ -344,9 +348,9 @@
   function leaveItem(i, dir) {
     var it = items[i], o = objs[i], tl = gsap.timeline();
     if (calm) return tl.to([it, o], { autoAlpha: 0, duration: 0.2 }).call(show, [it, false]);
-    return tl.to($$('.ln > span', it), { yPercent: -108 * dir, duration: 0.5, ease: 'power3.in', stagger: 0.03 }, 0)
-      .to($$('.fd', it), { autoAlpha: 0, y: -18 * dir, duration: 0.4, ease: 'power2.in' }, 0)
-      .to(o, { autoAlpha: 0, y: -70 * dir, rotation: -7 * dir, scale: 0.94, duration: 0.5, ease: 'power2.in' }, 0)
+    return tl.to($$('.ln > span', it), { yPercent: -108 * dir, duration: 0.34, ease: 'power2.in', stagger: { amount: 0.05 } }, 0)
+      .to($$('.fd', it), { autoAlpha: 0, y: -14 * dir, duration: 0.28, ease: 'power2.in' }, 0)
+      .to(o, { autoAlpha: 0, y: -60 * dir, rotation: -6 * dir, scale: 0.94, duration: 0.38, ease: 'power2.in' }, 0)
       .call(show, [it, false]);
   }
 
@@ -375,12 +379,13 @@
     if (n === cur || busy) return false;
     var dir = n > cur ? 1 : -1, a = STEPS[cur], b = STEPS[n], tl = gsap.timeline();
     busy = true;
-    if (a.sc === b.sc) tl.add(leaveItem(a.item, dir), 0).add(enterItem(b.item, dir), calm ? 0.1 : 0.3);
-    else tl.add(leaveScene(a.sc, dir, a), 0).add(enterScene(b.sc, dir, b), calm ? 0.15 : 0.4);
+    /* the old words are fully gone (about 0.43s) before the new ones start, so two texts never share the screen */
+    if (a.sc === b.sc) tl.add(leaveItem(a.item, dir), 0).add(enterItem(b.item, dir), calm ? 0.1 : 0.42);
+    else tl.add(leaveScene(a.sc, dir, a), 0).add(enterScene(b.sc, dir, b), calm ? 0.15 : 0.46);
     tl.add(tagTo(n, dir), 0);
     frame(n, dir);
     cur = n;
-    gsap.delayedCall(calm ? 0.35 : 0.95, function () { busy = false; });
+    gsap.delayedCall(calm ? 0.35 : 1, function () { busy = false; });
     return true;
   }
   goStep = function (n) {

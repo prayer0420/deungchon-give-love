@@ -18,6 +18,11 @@
   --ease:cubic-bezier(.2,.7,.1,1);
   --hx:51vw;--hw:min(46vw,calc((66svh - 150px) / 1.94));--hl:34svh;--px:43.2%;
   --tagW:min(38vw,15.5svh);--tagZ:calc(var(--tagW) * 2.043);
+  /* cover type is sized from the height that is left after the date block, so the title and the date never meet */
+  --cvT:max(12.5svh,86px);--cvKo:clamp(38px,11vw,96px);--cvMax:min(37vw,28svh);
+  --cvInfo:calc(clamp(17px,4.7vw,26px) * 1.3 + clamp(31px,8.8vw,60px) + 36px);
+  --cvRoom:calc(100svh - var(--footH) - var(--sb) - 32px - var(--cvInfo) - var(--cvT));
+  --cvF:min(var(--cvMax),calc((var(--cvRoom) - var(--cvKo) * 1.08) / 1.68));
 }
 *,*::before,*::after{box-sizing:border-box}
 *{margin:0;padding:0}
@@ -64,8 +69,8 @@ b,em,i{font-weight:inherit;font-style:normal}
 .tag img{width:100%;-webkit-user-drag:none;user-select:none}
 .ink{position:absolute;left:12%;right:27%;top:31%;bottom:9%;display:flex;flex-direction:column;justify-content:space-between;color:var(--kraft-ink);mix-blend-mode:multiply}
 .ink-a{font-family:var(--lat);font-weight:700;font-stretch:90%;font-size:7.4cqw;letter-spacing:.14em;color:var(--red-d);white-space:nowrap}
-.ink-b{font-family:var(--head);font-weight:800;font-size:12.8cqw;line-height:1.22;letter-spacing:-.05em}
-.ink-b.num{font-family:var(--lat);font-stretch:75%;font-size:25cqw;line-height:.9;letter-spacing:-.035em;color:var(--red-d)}
+.ink-b{font-family:var(--head);font-weight:800;font-size:12.8cqw;line-height:1.22;letter-spacing:-.03em}
+.ink-b.num{font-family:var(--lat);font-stretch:75%;font-size:25cqw;line-height:.9;letter-spacing:.01em;color:var(--red-d)}
 .ink-b.num.long{font-size:19cqw}
 .ink-c{font-family:var(--lat);font-weight:700;font-size:7.2cqw;letter-spacing:.08em;white-space:nowrap}
 .obj{display:none}
@@ -73,9 +78,9 @@ b,em,i{font-weight:inherit;font-style:normal}
 /* ---------- type ---------- */
 .ln{display:block;overflow:hidden;padding:.05em .06em .1em;margin:-.05em -.06em -.1em}
 .ln>span{display:inline-block}
-.h{font-family:var(--head);font-weight:800;line-height:1.12;letter-spacing:-.045em;color:var(--ink)}
+.h{font-family:var(--head);font-weight:800;line-height:1.12;letter-spacing:-.03em;color:var(--ink)}
 .h-big{font-size:clamp(34px,min(15vw,8.4svh),104px)}
-.h-fin{font-family:var(--head);font-weight:800;font-size:clamp(32px,min(12.4vw,7.2svh),96px);line-height:1.14;letter-spacing:-.05em}
+.h-fin{font-family:var(--head);font-weight:800;font-size:clamp(32px,min(12.4vw,7.2svh),96px);line-height:1.14;letter-spacing:-.03em}
 .h-serif{font-family:var(--serif);font-weight:400;font-size:clamp(17px,min(6.4vw,3.45svh),34px);line-height:1.55;letter-spacing:-.025em;color:var(--ink)}
 .p{margin-top:16px;max-width:30em;font-size:clamp(14.5px,min(4.2vw,2.3svh),19px);line-height:1.7;font-weight:500;color:var(--ink-2)}
 .p-lg{margin-top:20px;font-size:clamp(16px,min(5vw,2.7svh),24px);font-weight:600;line-height:1.6;color:var(--ink)}
@@ -92,21 +97,21 @@ b,em,i{font-weight:inherit;font-style:normal}
 /* cover */
 .sc-cover{position:relative;min-height:100vh;min-height:100svh}
 .sc-cover .sc-in{position:absolute;inset:0}
-.cv-title{position:absolute;z-index:3;left:calc(var(--pad) - .03em);top:max(12.5svh,86px);font-weight:800;line-height:1}
-.cv-ko{font-family:var(--head);font-size:clamp(38px,11vw,96px);letter-spacing:-.05em;line-height:1.08}
-.cv-en{font-family:var(--lat);font-weight:800;font-stretch:75%;font-size:min(37vw,28svh);line-height:.8;letter-spacing:-.035em;white-space:nowrap}
+.cv-title{position:absolute;z-index:3;left:calc(var(--pad) - .03em);top:var(--cvT);font-weight:800;line-height:1}
+.cv-ko{font-family:var(--head);font-size:var(--cvKo);letter-spacing:-.03em;line-height:1.08}
+.cv-en{font-family:var(--lat);font-weight:800;font-stretch:75%;font-size:var(--cvF);line-height:.8;letter-spacing:.01em;white-space:nowrap}
 .cv-en .w,.cv-en .c{display:inline-block}
 .cv-en .c{transform-origin:50% 100%}
 .cv-love{color:var(--red)}
 .cv-info{position:absolute;z-index:3;left:var(--pad);bottom:calc(var(--footH) + var(--sb) + 4px);max-width:54vw}
-.cv-name{font-family:var(--head);font-weight:800;font-size:clamp(17px,4.7vw,26px);line-height:1.3;letter-spacing:-.035em}
-.cv-date{margin-top:6px;font-family:var(--lat);font-weight:800;font-stretch:78%;font-size:clamp(31px,8.8vw,60px);line-height:1;letter-spacing:-.02em}
+.cv-name{font-family:var(--head);font-weight:800;font-size:clamp(17px,4.7vw,26px);line-height:1.3;letter-spacing:-.02em}
+.cv-date{margin-top:6px;font-family:var(--lat);font-weight:800;font-stretch:78%;font-size:clamp(31px,8.8vw,60px);line-height:1;letter-spacing:.015em}
 .cv-date em{margin-left:8px;font-family:var(--head);font-size:.46em;color:var(--red)}
 .cv-place{margin-top:10px;font-size:13.5px;font-weight:600;line-height:1.5;color:var(--sub)}
 
 /* when */
-.when-d{font-family:var(--lat);font-weight:800;font-stretch:75%;font-size:clamp(84px,min(38vw,19svh),240px);line-height:.9;letter-spacing:-.045em;color:var(--red)}
-.when-t{margin-top:10px;font-family:var(--head);font-weight:800;font-size:clamp(22px,min(8vw,4.3svh),48px);line-height:1.2;letter-spacing:-.04em}
+.when-d{font-family:var(--lat);font-weight:800;font-stretch:75%;font-size:clamp(84px,min(38vw,19svh),240px);line-height:.9;letter-spacing:.02em;color:var(--red)}
+.when-t{margin-top:10px;font-family:var(--head);font-weight:800;font-size:clamp(22px,min(8vw,4.3svh),48px);line-height:1.2;letter-spacing:-.02em}
 .when-c{margin-top:14px;font-size:14.5px;font-weight:600;color:var(--sub);font-variant-numeric:tabular-nums}
 .when-c b{font-weight:800;color:var(--ink)}
 .roll{display:inline-grid;overflow:hidden;vertical-align:bottom;height:1.4em;line-height:1.4}
@@ -117,7 +122,7 @@ b,em,i{font-weight:inherit;font-style:normal}
 .it+.it{margin-top:30px}
 .it-n{font-family:var(--lat);font-weight:700;font-size:14px;letter-spacing:.08em;color:var(--red)}
 .it-n i{margin-left:6px;color:var(--mute)}
-.it-t{margin-top:2px;font-family:var(--head);font-weight:800;font-size:clamp(40px,min(16vw,8.8svh),112px);line-height:1.08;letter-spacing:-.055em}
+.it-t{margin-top:2px;font-family:var(--head);font-weight:800;font-size:clamp(40px,min(16vw,8.8svh),112px);line-height:1.08;letter-spacing:-.03em}
 .it-p{margin-top:8px;font-size:clamp(15px,min(4.4vw,2.45svh),20px);font-weight:600;color:var(--ink-2)}
 
 /* place */
@@ -172,7 +177,7 @@ b,em,i{font-weight:inherit;font-style:normal}
 .menu.on .menu-list li:nth-child(6){transition-delay:.15s}.menu.on .menu-list li:nth-child(7){transition-delay:.18s}
 .menu-list a{display:grid;grid-template-columns:2.2em 1fr;align-items:baseline;column-gap:8px;padding:13px 2px}
 .mn{grid-row:span 2;font-family:var(--lat);font-weight:700;font-size:13px;letter-spacing:.06em;color:var(--sub)}
-.menu-list b{font-family:var(--head);font-weight:800;font-size:clamp(22px,6vw,30px);line-height:1.25;letter-spacing:-.04em}
+.menu-list b{font-family:var(--head);font-weight:800;font-size:clamp(22px,6vw,30px);line-height:1.25;letter-spacing:-.02em}
 .menu-list small{font-size:13px;font-weight:600;color:var(--sub)}
 .menu-list a[aria-current] b,.menu-list a[aria-current] .mn{color:var(--red)}
 @media (hover:hover){.menu-list a:hover b{color:var(--red)}}
@@ -182,21 +187,34 @@ b,em,i{font-weight:inherit;font-style:normal}
 .toast.on{opacity:1;transform:translate(-50%,0)}
 
 /* ---------- sizes ---------- */
+/* phones held upright. The tag image is 1 : 2.043; its card runs from 11.5% to 95.7% of that height and from 1.5% to 81.5% of the width.
+   The cover title must stay clear of the card even at the far end of the idle swing (2.2deg around the top of the screen). */
+@media (max-width:719px) and (max-aspect-ratio:11/10){
+  :root{
+    --hl:34svh;--cvMax:32vw;
+    --hw:max(84px,min(calc((100vw - var(--pad) * 2 - 30px - var(--cvF) * 1.58) / .815),calc((100svh - var(--footH) - var(--sb) - 10px - var(--hl)) / 1.955)));
+    --hx:calc(100vw - var(--pad) - var(--hw) * .815);
+  }
+  .cv-info{max-width:calc(var(--hx) - var(--pad) - 16px)}
+}
+/* tall phones: the title gets the whole top and the tag hangs just below LOVE, beside the date */
+@media (max-width:719px) and (max-aspect-ratio:10/18){
+  :root{
+    --cvMax:min(37vw,calc((100svh - 300px) / 2.9));
+    --cvB:calc(var(--cvT) + var(--cvKo) * 1.08 + var(--cvF) * 1.68);
+    --hw:max(84px,min(44vw,calc((100svh - var(--footH) - var(--sb) - 22px - var(--cvB)) / 1.72)));
+    --hl:calc(var(--cvB) + 16px - var(--hw) * .235);
+  }
+}
 @media (max-width:719px) and (max-height:720px){
-  :root{--hl:36svh;--hx:54vw;--hw:min(36vw,calc((50svh - 24px) / 1.94))}
-  .cv-en{font-size:min(32vw,20svh)}
-  .cv-info{max-width:calc(var(--hx) - var(--pad) - 8px)}
   .cv-name{font-size:clamp(15px,4.1vw,17px)}
 }
 @media (min-width:720px){
-  :root{--hx:62vw;--hw:min(34vw,300px,calc((66svh - 150px) / 1.94));--hl:30svh}
-  .cv-en{font-size:min(30vw,24svh)}
+  :root{--hx:62vw;--hw:min(34vw,300px,calc((66svh - 150px) / 1.94));--hl:30svh;--cvMax:min(30vw,24svh)}
   .cv-info{max-width:none}
 }
 @media (min-width:960px){
-  :root{--hx:60vw;--hw:min(25vw,330px,calc((80svh - 120px) / 1.94));--hl:16svh}
-  .cv-title{top:max(14svh,92px)}
-  .cv-en{font-size:min(18vw,27svh)}
+  :root{--hx:60vw;--hw:min(25vw,330px,calc((80svh - 120px) / 1.94));--hl:16svh;--cvT:max(14svh,92px);--cvMax:min(18vw,27svh)}
 }
 /* landscape: words on the left, the tag and objects on the right */
 @media (min-aspect-ratio:11/10){
@@ -211,6 +229,22 @@ b,em,i{font-weight:inherit;font-style:normal}
   .when-t{font-size:clamp(22px,min(3.6vw,5.4svh),56px)}
   .p{font-size:clamp(14.5px,min(1.5vw,2.4svh),20px)}
   .p-lg{font-size:clamp(16px,min(2vw,3svh),28px)}
+}
+/* landscape cover: 등촌 scales with the title, and the title takes only the height the date block leaves */
+@media (min-aspect-ratio:11/10){
+  :root{--cvKo:max(30px,calc(var(--cvF) * .42));--cvF:min(var(--cvMax),calc(var(--cvRoom) / 2.134))}
+}
+/* phones on their side: the date block moves beside the title so both fit the short screen */
+@media (min-aspect-ratio:11/10) and (max-height:500px){
+  :root{
+    --cvT:calc(var(--barH) + var(--st) + 12px);
+    --cvRoom:calc(100svh - var(--footH) - var(--sb) - 14px - var(--cvT));
+    --hw:min(22vw,calc((100svh - var(--barH) - var(--st) - var(--footH) - var(--sb) - 16px) / 2.043));
+    --hx:64vw;--hl:calc(var(--barH) + var(--st) + 4px);
+  }
+  .cv-info{left:calc(var(--pad) + var(--cvF) * 1.62 + 32px);max-width:calc(64vw - var(--pad) - var(--cvF) * 1.62 - 60px)}
+  .cv-name{font-size:16px}
+  .cv-date{font-size:32px}
 }
 @media (prefers-reduced-motion:reduce){
   .ib .eq i{animation:none}
