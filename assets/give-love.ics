@@ -8,18 +8,20 @@ UID:give-love-20261107@deungchon-2ya
 DTSTAMP:20261010T000000Z
 DTSTART:20261107T030000Z
 DTEND:20261107T070000Z
-SUMMARY:등촌 GIVE LOVE 플리마켓 & 새생명축제
+SUMMARY:등촌 GIVE LOVE 맛보기 플리마켓
 LOCATION:등촌교회 교육관 1층\, 서울 양천구 목동중앙북로8
  길 49
-DESCRIPTION:등촌교회 2청년회가 여는 플리마켓 & 새생명축
- 제예요.\n동네 이웃 누구나 부담 없이 놀러 오세요.\n비
- 가 오면 교육관 실내 로비와 소강당에서 열려요.\nhttps://
- prayer0420.github.io/deungchon-give-love/
+DESCRIPTION:11월 15일 주일 새생명축제를 앞두고 등촌교회 2
+ 청년회가 여는 맛보기 플리마켓이에요.\n동네 이웃 누구
+ 나 부담 없이 놀러 오세요.\n비가 오면 교육관 실내 로비
+ 와 소강당에서 열려요.\n판매 수익금은 전액 기아대책과
+  자립청소년 지원에 기부해요.\nhttps://prayer0420.github.io/deu
+ ngchon-give-love/
 URL:https://prayer0420.github.io/deungchon-give-love/
 BEGIN:VALARM
 TRIGGER:-PT2H
 ACTION:DISPLAY
-DESCRIPTION:오늘 낮 12시\, 등촌 GIVE LOVE 플리마켓
+DESCRIPTION:오늘 낮 12시\, 맛보기 플리마켓
 END:VALARM
 END:VEVENT
 END:VCALENDAR

@@ -16,8 +16,9 @@
   function toast(msg) {
     toastEl.textContent = msg;
     toastEl.classList.add('on');
+    d.classList.add('toasting');
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(function () { toastEl.classList.remove('on'); }, 2400);
+    toastTimer = setTimeout(function () { toastEl.classList.remove('on'); d.classList.remove('toasting'); }, 2400);
   }
   function copyText(t) {
     if (navigator.clipboard && window.isSecureContext) {
@@ -43,8 +44,8 @@
   });
   var shareUrl = (location.protocol === 'file:') ? 'https://prayer0420.github.io/deungchon-give-love/' : location.origin + location.pathname;
   var shareData = {
-    title: '등촌 GIVE LOVE · 11월 7일 플리마켓 & 새생명축제',
-    text: '11월 7일 토요일 낮 12시, 등촌교회 교육관 1층에서 플리마켓 & 새생명축제가 열려요. 같이 가요!',
+    title: '등촌 GIVE LOVE · 새생명축제에 초대합니다',
+    text: '11월 15일 주일 오후 2시 30분, 등촌교회 새생명축제에 초대해요. 일주일 전 11월 7일 토요일 낮 12시에는 교육관 1층에서 맛보기 플리마켓도 열려요. 같이 가요!',
     url: shareUrl
   };
   var shareBtn = $('#shareBtn');
@@ -59,12 +60,13 @@
   if (copyBtn) copyBtn.addEventListener('click', function () {
     copyText(shareUrl).then(function (ok) { toast(ok ? '링크를 복사했어요.' : shareUrl); });
   });
-  var calBtn = $('#calBtn');
-  if (calBtn && !/iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent)) {
-    calBtn.href = calBtn.getAttribute('data-gcal');
-    calBtn.removeAttribute('download');
-    calBtn.target = '_blank';
-    calBtn.rel = 'noopener';
+  if (!/iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent)) {
+    $$('[data-gcal]').forEach(function (a) {
+      a.href = a.getAttribute('data-gcal');
+      a.removeAttribute('download');
+      a.target = '_blank';
+      a.rel = 'noopener';
+    });
   }
 
   /* ---------- background music ---------- */
@@ -104,16 +106,20 @@
     }
   }
 
-  /* ---------- live D-day (event: 2026-11-07 12:00–16:00 KST) ---------- */
-  var START = Date.UTC(2026, 10, 7, 3, 0, 0);
-  var END = Date.UTC(2026, 10, 7, 7, 0, 0);
+  /* ---------- live D-day: 새생명축제 2026-11-15 14:30 KST (big number), 맛보기 플리마켓 2026-11-07 12:00–16:00 KST (line below) ---------- */
+  var MK_S = Date.UTC(2026, 10, 7, 3, 0, 0);
+  var MK_E = Date.UTC(2026, 10, 7, 7, 0, 0);
+  var FE_S = Date.UTC(2026, 10, 15, 5, 30, 0);
+  var FE_E = Date.UTC(2026, 10, 15, 7, 30, 0);
   var DAY = 86400000;
-  var ddN = $('#ddN'), ddX = $('#ddX'), ddTxt = $('#ddTxt');
+  var ddN = $('#ddN'), ddX = $('#ddX'), ddTxt = $('#ddTxt'), ddSub = $('#ddSub'), ddK = $('#ddK');
   var counting = false;
   function kstDay(t) { return Math.floor((t + 9 * 3600000) / DAY); }
   function pad2(n) { return (n < 10 ? '0' : '') + n; }
-  function daysLeft() { return kstDay(START) - kstDay(Date.now()); }
-  var rollBox = null;
+  function daysTo(t) { return kstDay(t) - kstDay(Date.now()); }
+  function daysLeft() { return daysTo(FE_S); }
+  function setText(el, v) { if (el && el.textContent !== v) el.textContent = v; }
+  var rollBox = null, msgNow = '', subNow = null;
   function roll(b, v) {
     if (b.getAttribute('data-v') === v) return;
     b.setAttribute('data-v', v);
@@ -133,32 +139,159 @@
   }
   function setCountdown(dd, h, m, s) {
     if (!rollBox) {
-      ddTxt.innerHTML = '축제까지 <b class="roll" data-k="d"></b>일 <b class="roll" data-k="h"></b>시간 <b class="roll" data-k="m"></b>분 <b class="roll" data-k="s"></b>초';
+      msgNow = '';
+      ddTxt.innerHTML = '<b class="roll" data-k="d"></b>일 <b class="roll" data-k="h"></b>시간 <b class="roll" data-k="m"></b>분 <b class="roll" data-k="s"></b>초 남았어요';
       rollBox = {};
       $$('.roll', ddTxt).forEach(function (b) { rollBox[b.getAttribute('data-k')] = b; });
     }
     roll(rollBox.d, String(dd)); roll(rollBox.h, h); roll(rollBox.m, m); roll(rollBox.s, s);
   }
+  function setMsg(html) { rollBox = null; if (msgNow !== html) { msgNow = html; ddTxt.innerHTML = html; } }
+  function setSub(html) {
+    if (!ddSub || subNow === html) return;
+    subNow = html;
+    ddSub.innerHTML = html;
+    ddSub.hidden = !html;
+  }
   function renderDday() {
     var now = Date.now();
-    if (now < START) {
-      var s = Math.floor((START - now) / 1000);
+    if (now < FE_S) {
+      var s = Math.floor((FE_S - now) / 1000);
       var dd = Math.floor(s / 86400); s -= dd * 86400;
       var h = Math.floor(s / 3600); s -= h * 3600;
       var m = Math.floor(s / 60); s -= m * 60;
       var cal = daysLeft();
-      if (!counting) { ddX.textContent = '-'; ddN.textContent = cal > 0 ? String(cal) : 'DAY'; }
+      setText(ddK, cal > 0 ? '새생명축제까지' : '오늘 오후 2시 30분, 새생명축제');
+      if (!counting) { setText(ddX, '-'); setText(ddN, cal > 0 ? String(cal) : 'DAY'); }
       setCountdown(dd, pad2(h), pad2(m), pad2(s));
-    } else if (now < END) {
-      ddX.textContent = '-'; ddN.textContent = 'DAY';
-      rollBox = null; ddTxt.innerHTML = '<b>지금 장터가 열려 있어요.</b> 교육관 1층으로 오세요.';
+    } else if (now < FE_E) {
+      setText(ddK, '새생명축제');
+      setText(ddX, '-'); setText(ddN, 'DAY');
+      setMsg('<b>지금 새생명축제가 열리고 있어요.</b> 본당으로 오세요.');
     } else {
-      ddX.textContent = '+'; ddN.textContent = String(Math.max(1, kstDay(now) - kstDay(START)));
-      rollBox = null; ddTxt.innerHTML = '축제가 끝났어요. <b>함께해 주셔서 고마워요.</b>';
+      var past = kstDay(now) - kstDay(FE_S);
+      setText(ddK, '새생명축제');
+      setText(ddX, past > 0 ? '+' : '-'); setText(ddN, past > 0 ? String(past) : 'DAY');
+      setMsg('<b>함께해 주셔서 고마워요.</b> 주일 오후 2시 30분, 본당에서 또 만나요.');
+    }
+    if (now < MK_S) {
+      var md = daysTo(MK_S);
+      setSub(md > 0 ? '<b>맛보기 플리마켓 D-' + md + '</b> 11월 7일 토요일 낮 12시' : '<b>오늘 낮 12시</b> 맛보기 플리마켓이 열려요');
+    } else if (now < MK_E) {
+      setSub('<b>지금 맛보기 장터가 열려 있어요.</b> 교육관 1층으로 오세요');
+    } else if (now < FE_S) {
+      setSub('맛보기 장터에 와 주셔서 고마워요');
+    } else {
+      setSub('');
     }
   }
   renderDday();
   setInterval(renderDday, 1000);
+
+  /* ---------- table of contents + "keep going" cue (both work with or without motion) ---------- */
+  var menu = $('#menu'), menuBtn = $('#menuBtn'), menuX = $('#menuX'), nextBtn = $('#nextCue');
+  var ORDER = ['top', 'envelope', 'invite', 'festival', 'date', 'market', 'programs', 'give', 'welcome', 'film', 'map', 'share', 'finale'];
+  var NAMES = { envelope: '초대장 열기', invite: '편지 읽기', festival: '새생명축제', date: '11월의 두 날', market: '맛보기 플리마켓', programs: '장터 구경', give: '나눔', welcome: '처음 오신 분께', film: '미리 보기', map: '오시는 길', share: '초대장 보내기', finale: '마지막 인사' };
+  function shown(el) { return !!(el && el.getClientRects().length); }
+  function docTop(el) { return el.getBoundingClientRect().top + window.scrollY; }
+  function goTo(el) {
+    if (!el) return;
+    var y = Math.max(0, Math.round(docTop(el)));
+    var L = window.__gl && window.__gl.lenis;
+    if (L) L.scrollTo(y, { duration: Math.min(2.6, 1 + Math.abs(y - window.scrollY) / 5000), force: true });
+    else window.scrollTo({ top: y, behavior: reduce ? 'auto' : 'smooth' });
+  }
+  function currentIndex() {
+    var mark = window.scrollY + window.innerHeight * 0.5, idx = 0;
+    ORDER.forEach(function (id, i) { var el = document.getElementById(id); if (shown(el) && docTop(el) <= mark) idx = i; });
+    return idx;
+  }
+  function nextAfter(i) {
+    for (var k = i + 1; k < ORDER.length; k++) { var el = document.getElementById(ORDER[k]); if (shown(el)) return el; }
+    return null;
+  }
+  function hideNext() {
+    if (!nextBtn) return;
+    nextBtn.classList.remove('on');
+    nextBtn.setAttribute('aria-hidden', 'true');
+    nextBtn.setAttribute('tabindex', '-1');
+  }
+  function showNext() {
+    if (!nextBtn || (menu && !menu.hidden)) return;
+    var y = window.scrollY, H = window.innerHeight, max = document.documentElement.scrollHeight - H;
+    var t = nextAfter(currentIndex());
+    if (!t || y < H * 0.35 || y > max - 60) { hideNext(); return; }
+    var name = NAMES[t.id] || '';
+    nextBtn.querySelector('.next-l').textContent = name;
+    nextBtn.setAttribute('data-to', t.id);
+    nextBtn.setAttribute('aria-label', '다음 장면으로: ' + name);
+    nextBtn.removeAttribute('aria-hidden');
+    nextBtn.removeAttribute('tabindex');
+    nextBtn.classList.add('on');
+  }
+  if (nextBtn) {
+    var idleT = 0, lastY = window.scrollY;
+    nextBtn.addEventListener('click', function () { var t = document.getElementById(nextBtn.getAttribute('data-to')); hideNext(); goTo(t); });
+    window.addEventListener('scroll', function () {
+      var y = window.scrollY;
+      if (Math.abs(y - lastY) > 4) { lastY = y; hideNext(); }
+      clearTimeout(idleT);
+      idleT = setTimeout(showNext, 1300);
+    }, { passive: true });
+  }
+  var menuTimer = 0;
+  function setMenu(open) {
+    if (!menu || !menuBtn) return;
+    var L = window.__gl && window.__gl.lenis;
+    clearTimeout(menuTimer);
+    if (open) {
+      var cur = ORDER[currentIndex()];
+      $$('.menu-list a', menu).forEach(function (a) {
+        if (a.getAttribute('href') === '#' + cur) a.setAttribute('aria-current', 'location'); else a.removeAttribute('aria-current');
+      });
+      menu.hidden = false;
+      d.classList.add('menu-open');
+      menuBtn.setAttribute('aria-expanded', 'true');
+      menuBtn.setAttribute('aria-label', '목차 닫기');
+      if (L) L.stop();
+      hideNext();
+      requestAnimationFrame(function () { requestAnimationFrame(function () { menu.classList.add('on'); if (menuX) menuX.focus(); }); });
+    } else {
+      menu.classList.remove('on');
+      d.classList.remove('menu-open');
+      menuBtn.setAttribute('aria-expanded', 'false');
+      menuBtn.setAttribute('aria-label', '목차 열기');
+      if (L) L.start();
+      menuTimer = setTimeout(function () { menu.hidden = true; }, reduce ? 0 : 300);
+    }
+  }
+  if (menu && menuBtn) {
+    menuBtn.addEventListener('click', function () { setMenu(menu.hidden); });
+    if (menuX) menuX.addEventListener('click', function () { setMenu(false); menuBtn.focus(); });
+    $$('.menu-list a', menu).forEach(function (a) {
+      a.addEventListener('click', function (e) {
+        e.preventDefault();
+        var t = document.getElementById(a.getAttribute('href').slice(1));
+        setMenu(false);
+        setTimeout(function () {
+          goTo(t);
+          if (t) {
+            if (!t.hasAttribute('tabindex')) t.setAttribute('tabindex', '-1');
+            try { t.focus({ preventScroll: true }); } catch (err) { /* older browsers */ }
+          }
+        }, reduce ? 0 : 140);
+      });
+    });
+    document.addEventListener('keydown', function (e) {
+      if (menu.hidden) return;
+      if (e.key === 'Escape') { e.preventDefault(); setMenu(false); menuBtn.focus(); return; }
+      if (e.key === 'Tab') {
+        var f = $$('button, a', menu), first = f[0], last = f[f.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
+    });
+  }
 
   /* ---------- cross-stitch finale (L ♥ V E) ---------- */
   function buildStitch() {
@@ -318,7 +451,8 @@
         .set('.env-flap', { zIndex: 0 }, 0.27)
         .to('.env-card', { yPercent: -66, rotation: -2, duration: 0.32, ease: 'power2.out' }, 0.4)
         .to(['.env-back', '.env-front', '.env-flap'], { yPercent: 60, autoAlpha: 0, duration: 0.24, ease: 'power2.in' }, 0.76)
-        .to('.env-card', { yPercent: -30, rotation: 0, scale: 1.14, duration: 0.24, ease: 'power2.inOut' }, 0.76);
+        .to('.env-card', { yPercent: -30, rotation: 0, scale: 1.14, duration: 0.24, ease: 'power2.inOut' }, 0.76)
+        .fromTo('.env-after', { autoAlpha: 0, y: 14 }, { autoAlpha: 1, y: 0, duration: 0.14, ease: 'power2.out' }, 0.86);
       window.__gl.env = envTl;
     }
 
@@ -365,11 +499,13 @@
     if (window.DrawSVGPlugin) {
       gsap.fromTo('.cal-heart path', { drawSVG: '0%' }, { drawSVG: '100%', ease: 'none', scrollTrigger: { trigger: '.cal-grid', start: 'top 78%', end: 'center 52%', scrub: 0.6 } });
     }
+    gsap.from('.fest-dot', { scale: 0, duration: 0.9, ease: 'back.out(2.2)', scrollTrigger: { trigger: '.cal-grid', start: 'top 62%' } });
+    gsap.from('.cal-key li', { autoAlpha: 0, x: -14, duration: 0.8, ease: 'expo.out', stagger: 0.1, scrollTrigger: { trigger: '.cal-key', start: 'top 94%' } });
     ST.create({
       trigger: '.dday', start: 'top 88%', once: true,
       onEnter: function () {
         var target = daysLeft();
-        if (target <= 1 || Date.now() >= START) return;
+        if (target <= 1 || Date.now() >= FE_S) return;
         counting = true;
         var o = { v: 0 };
         gsap.to(o, { v: target, duration: 1.6, ease: 'power3.out', onUpdate: function () { ddN.textContent = String(Math.round(o.v)); }, onComplete: function () { counting = false; renderDday(); } });

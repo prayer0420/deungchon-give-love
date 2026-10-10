@@ -104,7 +104,7 @@
         b.addEventListener('pointerleave', function () { gsap.to(b, { x: 0, y: 0, duration: 0.9, ease: 'elastic.out(1, 0.35)' }); });
       }
     });
-    $$('[data-copy], #copyBtn, #bgmBtn, #calBtn').forEach(function (b) {
+    $$('[data-copy], #copyBtn, #bgmBtn, [data-gcal]').forEach(function (b) {
       b.addEventListener('click', function (e) { var p = pt(e, b); burst(p[0], p[1], 8, { vmax: 420 }); });
     });
 
@@ -199,7 +199,7 @@
     }
     var hd = $('.hi-date b');
     if (hd && window.ScrambleTextPlugin) {
-      var scr = function () { gsap.to(hd, { duration: 0.9, scrambleText: { text: '2026.11.07', chars: '0123456789', speed: 0.5 }, overwrite: true }); };
+      var scr = function () { gsap.to(hd, { duration: 0.9, scrambleText: { text: '2026.11.15', chars: '0123456789', speed: 0.5 }, overwrite: true }); };
       hd.parentElement.addEventListener(fine ? 'pointerenter' : 'click', scr);
     }
 
@@ -233,16 +233,20 @@
     /* ---------- calendar + D-day ---------- */
     $$('.cal-grid .d').forEach(function (cell) {
       cell.addEventListener('click', function (e) {
+        var p = pt(e, cell);
         if (cell.classList.contains('on')) {
-          var p = pt(e, cell);
           burst(p[0], p[1], 22, { vmax: 640 });
           if (window.DrawSVGPlugin) gsap.fromTo('.cal-heart path', { drawSVG: '0%' }, { drawSVG: '100%', duration: 0.9, ease: 'power2.inOut' });
           gsap.fromTo(cell.querySelector('b'), { scale: 1.8 }, { scale: 1, duration: 1.2, ease: 'elastic.out(1, 0.3)' });
-          toast('11월 7일 토요일, 이날 만나요!');
+          toast('11월 7일 토요일 낮 12시, 맛보기 플리마켓!');
+        } else if (cell.classList.contains('fest')) {
+          burst(p[0], p[1], 26, { vmax: 680 });
+          gsap.fromTo(cell.querySelector('.fest-dot'), { scale: 0.2 }, { scale: 1, duration: 1.1, ease: 'elastic.out(1, 0.32)' });
+          gsap.fromTo(cell.querySelector('b'), { scale: 1.7 }, { scale: 1, duration: 1.1, ease: 'elastic.out(1, 0.3)' });
+          toast('11월 15일 주일 오후 2시 30분, 새생명축제!');
         } else {
           gsap.fromTo(cell, { x: -8 }, { x: 0, duration: 0.7, ease: 'elastic.out(1.2, 0.2)' });
-          var on = $('.cal-grid .d.on b');
-          if (on) gsap.fromTo(on, { scale: 1.6 }, { scale: 1, duration: 0.9, ease: 'elastic.out(1, 0.3)' });
+          $$('.cal-grid .d.on b, .cal-grid .d.fest b').forEach(function (b) { gsap.fromTo(b, { scale: 1.6 }, { scale: 1, duration: 0.9, ease: 'elastic.out(1, 0.3)' }); });
         }
       });
     });
@@ -271,8 +275,24 @@
         .fromTo(clock, { scale: 1.08 }, { scale: 1, duration: 0.8, ease: 'elastic.out(1, 0.3)' });
       var p = pt(e, clock);
       burst(p[0], p[1], 12);
-      toast('주일 오후 2시 30분, 본당에서 만나요!');
+      toast('11월 15일 주일 오후 2시 30분, 본당에서 만나요!');
     });
+
+    /* ---------- festival programme: tap a row and its object hops ---------- */
+    $$('.fx-i').forEach(function (li) {
+      var img = li.querySelector('.fx-img img');
+      li.addEventListener('click', function (e) {
+        var p = pt(e, li);
+        if (img) gsap.timeline()
+          .to(img, { y: -24, rotation: R(-12, 12), scale: 1.08, duration: 0.28, ease: 'power2.out', overwrite: 'auto' })
+          .to(img, { y: 0, rotation: 0, scale: 1, duration: 1, ease: 'elastic.out(1, 0.32)' });
+        burst(p[0], p[1], 12);
+      });
+      if (fine && img) li.addEventListener('pointerenter', function () { gsap.fromTo(img, { rotation: 0 }, { rotation: R(-8, 8), duration: 0.5, ease: 'power2.out', yoyo: true, repeat: 1, overwrite: 'auto' }); });
+    });
+
+    /* ---------- programs: say once that the objects can be moved ---------- */
+    if ($('.prog')) ST.create({ trigger: '.prog', start: 'top 30%', once: true, onEnter: function () { toast(fine ? '물건을 끌어서 던지거나 눌러 보세요' : '물건을 옆으로 밀거나 눌러 보세요'); } });
 
     /* ---------- programs: drag and throw the objects, tap to make them jump ---------- */
     var zTop = 5;
@@ -290,8 +310,10 @@
       };
       if (window.Draggable) {
         window.Draggable.create(el, {
-          type: fine ? 'x,y' : 'x', bounds: stage, inertia: !!window.InertiaPlugin, edgeResistance: 0.72, minimumMovement: 6,
-          onPress: function () { el.parentElement.style.zIndex = ++zTop; gsap.to(el, { scale: 1.08, duration: 0.25, ease: 'power2.out' }); },
+          type: fine ? 'x,y' : 'x', inertia: !!window.InertiaPlugin, edgeResistance: 0.72, minimumMovement: 6,
+          /* bounds are applied on press: at creation the scene objects still sit at their fly-in offsets,
+             and clamping them then would leave the inner element shifted for good */
+          onPress: function () { this.applyBounds(stage); el.parentElement.style.zIndex = ++zTop; gsap.to(el, { scale: 1.08, duration: 0.25, ease: 'power2.out' }); },
           onRelease: function () { gsap.to(el, { scale: 1, duration: 0.7, ease: 'elastic.out(1, 0.4)' }); },
           onDrag: function () { gsap.to(el, { rotation: clamp(-28, 28, this.deltaX * 2.4), duration: 0.3, overwrite: 'auto' }); },
           onDragEnd: function () { gsap.to(el, { rotation: 0, duration: 1.2, ease: 'elastic.out(1, 0.3)' }); },
@@ -383,8 +405,8 @@
     var go = $('#goBtn'), note = $('#goNote');
     if (go && note) {
       var setGoing = function () {
-        go.querySelector('span').textContent = '11월 7일에 만나요 ♥';
-        note.textContent = '기다릴게요. 같이 올 사람도 데려오세요!';
+        go.querySelector('span').textContent = '11월에 만나요 ♥';
+        note.textContent = '7일 플리마켓, 15일 새생명축제에서 기다릴게요!';
         go.classList.add('is-going');
       };
       try { if (window.localStorage.getItem('gl-going') === '1') setGoing(); } catch (err) { /* storage blocked */ }
@@ -410,7 +432,7 @@
       var mv = Math.hypot(e.clientX - down.x, e.clientY - down.y), dt = Date.now() - down.t;
       down = null;
       if (mv > 8 || dt > 450) return;
-      if (e.target && e.target.closest && e.target.closest('a, button, [role="button"], [data-cursor], .obj-in, .hang-tag, input, textarea, .tape')) return;
+      if (e.target && e.target.closest && e.target.closest('a, button, [role="button"], [data-cursor], .obj-in, .hang-tag, input, textarea, .tape, .menu, .next')) return;
       burst(e.clientX, e.clientY, 7, { vmin: 160, vmax: 380, max: 20 });
     }, { passive: true });
   }
