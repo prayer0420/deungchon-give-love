@@ -117,14 +117,19 @@
   function roll(b, v) {
     if (b.getAttribute('data-v') === v) return;
     b.setAttribute('data-v', v);
+    var kids = Array.prototype.slice.call(b.children);
+    var old = kids.pop() || null;
+    kids.forEach(function (k) { if (window.gsap) window.gsap.killTweensOf(k); k.remove(); });
     var nu = document.createElement('span');
     nu.textContent = v;
-    var old = b.firstElementChild;
     b.appendChild(nu);
-    if (old && window.gsap && d.classList.contains('motion') && d.classList.contains('ready')) {
+    if (old && window.gsap && !document.hidden && d.classList.contains('motion') && d.classList.contains('ready')) {
       window.gsap.fromTo(nu, { yPercent: 100 }, { yPercent: 0, duration: 0.5, ease: 'power3.out' });
-      window.gsap.to(old, { yPercent: -100, duration: 0.5, ease: 'power3.out', onComplete: function () { old.remove(); } });
-    } else if (old) { old.remove(); }
+      window.gsap.to(old, { yPercent: -100, duration: 0.5, ease: 'power3.out', overwrite: true, onComplete: function () { old.remove(); } });
+    } else if (old) {
+      if (window.gsap) window.gsap.killTweensOf(old);
+      old.remove();
+    }
   }
   function setCountdown(dd, h, m, s) {
     if (!rollBox) {
