@@ -1,4 +1,4 @@
-/* 등촌 GIVE LOVE · app.js (v15, rules in DESIGN.md)
+/* 등촌 GIVE LOVE · app.js (v16, rules in DESIGN.md)
    One screen, many scenes. Wheel, swipe, arrow keys and the next button change the scene in place;
    the page itself never scrolls. Without GSAP the page stays a plain stacked document,
    and reduced-motion users get short fades. */
@@ -41,14 +41,64 @@
     });
   });
 
-  /* ---------- share + calendar ---------- */
-  var shareUrl = location.protocol === 'file:' ? URL0 : location.origin + location.pathname;
+  /* ---------- share: KakaoTalk ---------- */
+  /* KAKAO_KEY is the JavaScript key of the Kakao Developers app, which lists https://prayer0420.github.io under both
+     "JavaScript SDK 도메인" and "웹 도메인". The SDK (with its SRI hash) loads only near the last scene. With no key, or if
+     the SDK fails, the button opens the phone's share sheet (KakaoTalk is one of the choices) and computers copy the link. */
+  var KAKAO_KEY = '';
+  var KAKAO_SDK = 'https://t1.kakaocdn.net/kakao_js_sdk/2.8.3/kakao.min.js';
+  var KAKAO_SRI = 'sha384-oroumrnFVE0xtgqyDZJARgERibXg2C28380uaUZz2kHDS5CR7tu20eGiOU6GkTpy';
+  var shareUrl = URL0;
   var shareData = { title: '등촌 GIVE LOVE · 새생명축제에 초대합니다', text: '11월 15일 주일 오후 2시 30분, 등촌교회 본당에서 열리는 새생명축제에 초대해요. 같이 가요!', url: shareUrl };
-  var shareBtn = $('#shareBtn');
-  if (shareBtn) shareBtn.addEventListener('click', function () {
-    if (navigator.share) navigator.share(shareData).catch(function () {});
-    else copyText(shareUrl).then(function (ok) { toast(ok ? '링크를 복사했어요. 카톡에 붙여 넣어 보내 주세요.' : shareUrl); });
-  });
+  var shareBtn = $('#shareBtn'), kakaoWait = null;
+  function kakaoReady() { return !!(window.Kakao && window.Kakao.isInitialized && window.Kakao.isInitialized()); }
+  function loadKakao() {
+    if (!KAKAO_KEY) return Promise.reject(new Error('no key'));
+    if (kakaoReady()) return Promise.resolve(window.Kakao);
+    if (!kakaoWait) kakaoWait = new Promise(function (done, fail) {
+      var s = document.createElement('script');
+      s.src = KAKAO_SDK;
+      s.integrity = KAKAO_SRI;
+      s.crossOrigin = 'anonymous';
+      s.async = true;
+      s.onload = function () {
+        try { if (!window.Kakao.isInitialized()) window.Kakao.init(KAKAO_KEY); done(window.Kakao); } catch (e) { fail(e); }
+      };
+      s.onerror = function () { kakaoWait = null; s.remove(); fail(new Error('sdk')); };
+      document.head.appendChild(s);
+    });
+    return kakaoWait;
+  }
+  function warmKakao() { if (KAKAO_KEY && !kakaoReady()) loadKakao().catch(function () {}); }
+  function sendKakao(K) {
+    K.Share.sendDefault({
+      objectType: 'feed',
+      content: {
+        title: '등촌 GIVE LOVE · 새생명축제에 초대합니다',
+        description: '11월 15일 주일 오후 2:30 · 등촌교회 본당',
+        imageUrl: URL0 + 'assets/img/og.jpg',
+        imageWidth: 1200,
+        imageHeight: 630,
+        link: { mobileWebUrl: URL0, webUrl: URL0 }
+      },
+      buttons: [{ title: '초대장 열기', link: { mobileWebUrl: URL0, webUrl: URL0 } }]
+    });
+  }
+  function copyShare() { copyText(shareUrl).then(function (ok) { toast(ok ? '링크를 복사했어요. 카카오톡 대화방에 붙여 넣어 주세요.' : shareUrl); }); }
+  function shareSheet() {
+    if (navigator.share) navigator.share(shareData).catch(function (e) { if (!e || e.name !== 'AbortError') copyShare(); });
+    else copyShare();
+  }
+  if (shareBtn) {
+    ['pointerenter', 'touchstart', 'focus'].forEach(function (ev) { shareBtn.addEventListener(ev, warmKakao, { passive: true }); });
+    shareBtn.addEventListener('click', function () {
+      if (kakaoReady()) { try { sendKakao(window.Kakao); } catch (e) { shareSheet(); } return; }
+      if (KAKAO_KEY) loadKakao().then(sendKakao).catch(copyShare);
+      else shareSheet();
+    });
+  }
+
+  /* ---------- calendar ---------- */
   if (!/iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent)) {
     $$('[data-gcal]').forEach(function (a) {
       a.href = a.getAttribute('data-gcal');
@@ -91,7 +141,7 @@
   goBtn.addEventListener('click', function () {
     try { window.localStorage.setItem('gl-going', '1'); } catch (e) { /* storage blocked */ }
     setGoing();
-    if (window.gsap && !calm) window.gsap.fromTo(goBtn, { scale: 0.92 }, { scale: 1, duration: 0.9, ease: 'elastic.out(1, 0.45)' });
+    if (window.gsap && !calm) window.gsap.fromTo(goBtn, { scale: 0.96 }, { scale: 1, duration: 0.55, ease: 'power3.out' });
   });
 
   /* ---------- live countdown to 2026-11-15 14:30 KST ---------- */
@@ -184,7 +234,15 @@
 
   /* ---------- the deck ---------- */
   var gsap = window.gsap;
-  if (!gsap || !d.classList.contains('deck')) { d.classList.remove('deck'); return; }
+  if (!gsap || !d.classList.contains('deck')) {
+    d.classList.remove('deck');
+    /* stacked page: fetch the Kakao SDK when the share button comes near */
+    if (KAKAO_KEY && shareBtn && 'IntersectionObserver' in window) {
+      var near = new IntersectionObserver(function (es) { if (es[0].isIntersecting) { near.disconnect(); warmKakao(); } }, { rootMargin: '600px 0px' });
+      near.observe(shareBtn);
+    }
+    return;
+  }
   gsap.defaults({ overwrite: 'auto' });
 
   var stage = $('#stage'), bar = $('.bar'), ctrl = $('.ctrl');
@@ -218,8 +276,8 @@
   var items = $$('#s-prog .it'), objs = $$('.obj img'), plis = $$('.pl li'), plBar = $('.pl-bar');
   var hang = $('#hang'), move = $('#hangMove'), drop = $('#hangDrop'), kick = $('#hangKick'), wind = $('#hangWind'), swing = $('#hangSwing'), tag = $('#tag'), ink = $('#ink');
   var inkA = $('#inkA'), inkB = $('#inkB'), inkC = $('#inkC');
-  var cNow = $('#cNow'), rail = $('#railFill'), nextBtn = $('#nextBtn'), nextLabel = $('#nextLabel'), hint = $('#hint'), live = $('#live');
-  var cur = 0, busy = false, inkNow = 0, tagMode = 'hero', hinted = false, geo = null, lay = { low: null, fin: null };
+  var cNow = $('#cNow'), rail = $('#railFill'), nextBtn = $('#nextBtn'), nextLabel = $('#nextLabel'), cue = $('#cue'), cueN = $('#cueN'), live = $('#live');
+  var cur = 0, busy = false, inkNow = 0, tagMode = 'hero', cueNow = '', geo = null, lay = { low: null, fin: null };
 
   function show(el, on) {
     el.style.visibility = on ? 'visible' : 'hidden';
@@ -295,10 +353,16 @@
       .set(tag, { rotationY: -90 })
       .to(tag, { rotationY: 0, duration: 0.62, ease: 'power3.out', transformPerspective: 1000 });
   }
+  /* the card hangs on a string: released from rest it swings through once, a little, and stops (no springs) */
+  function settle(t) {
+    if (t >= 1) return 1;
+    var w = 3 * Math.PI;
+    return 1 - Math.exp(-6 * t) * (Math.cos(w * t) + 6 / w * Math.sin(w * t));
+  }
   function nudge(dir) {
     return gsap.timeline()
-      .to(kick, { rotation: -6 * dir, duration: 0.4, ease: 'power2.out' })
-      .to(kick, { rotation: 0, duration: 2.6, ease: 'elastic.out(1, 0.3)' });
+      .to(kick, { rotation: -4 * dir, duration: 0.42, ease: 'sine.out' })
+      .to(kick, { rotation: 0, duration: 2, ease: settle });
   }
   function tagTo(n, dir) {
     var s = STEPS[n], t = target(s.tag), tl = gsap.timeline(), mode = eff(s.tag), was = eff(tagMode);
@@ -477,6 +541,26 @@
       .call(show, [it, false]);
   }
 
+  /* the small cue beside the next button says to keep scrolling and names what comes next */
+  function nextName(n) {
+    var a = STEPS[n], b = STEPS[n + 1];
+    if (!b) return '';
+    if (a.sc === 'prog' && b.sc === 'prog') return $('.it-t', items[b.item]).textContent;
+    return NAMES[SCENES.indexOf(b.sc)];
+  }
+  function setCue(n, dir) {
+    cue.classList.toggle('off', n === LAST);
+    var txt = n === LAST ? '' : '다음 · ' + nextName(n);
+    if (!txt || txt === cueNow) return;
+    cueNow = txt;
+    if (calm || !d.classList.contains('ready')) { cueN.textContent = txt; return; }
+    gsap.timeline()
+      .to(cueN, { yPercent: -60 * dir, autoAlpha: 0, duration: 0.2, ease: 'power2.in' })
+      .call(function () { cueN.textContent = txt; })
+      .set(cueN, { yPercent: 60 * dir })
+      .to(cueN, { yPercent: 0, autoAlpha: 1, duration: 0.5, ease: 'expo.out' });
+  }
+
   /* frame: counter, progress line, next button, screen-reader note, menu marker */
   function frame(n, dir) {
     var si = SCENES.indexOf(STEPS[n].sc), num = pad2(si + 1);
@@ -492,7 +576,8 @@
     nextLabel.textContent = n === 0 ? '초대장 열기' : n === LAST ? '처음으로' : '다음';
     nextBtn.classList.toggle('up', n === LAST);
     nextBtn.setAttribute('aria-label', n === LAST ? '처음 장면으로' : '다음 장면으로');
-    if (n > 0 && !hinted) { hinted = true; gsap.to(hint, { autoAlpha: 0, duration: 0.4 }); }
+    setCue(n, dir);
+    if (n >= LAST - 1) warmKakao();
     live.textContent = (si + 1) + ' / ' + SCENES.length + ', ' + NAMES[si];
     $$('.menu-list a').forEach(function (a, k) { if (k === si) a.setAttribute('aria-current', 'step'); else a.removeAttribute('aria-current'); });
   }
@@ -518,7 +603,7 @@
   function bump(dir) {
     if (calm) return;
     var el = $('.sc-in', SC[STEPS[cur].sc]);
-    gsap.fromTo(el, { y: -16 * dir }, { y: 0, duration: 0.7, ease: 'elastic.out(1, 0.5)' });
+    gsap.timeline().to(el, { y: -12 * dir, duration: 0.18, ease: 'power2.out' }).to(el, { y: 0, duration: 0.7, ease: 'power3.out' });
   }
   function step(dir) { if (!go(cur + dir) && !busy) bump(dir); }
 
@@ -565,7 +650,7 @@
     var dy = p ? t.y - p.clientY : 0, dx = p ? t.x - p.clientX : 0, dt = performance.now() - t.t;
     var swipe = Math.abs(dy) > Math.abs(dx) && (Math.abs(dy) > 44 || (Math.abs(dy) > 18 && dt < 220));
     var moved = swipe && go(cur + (dy > 0 ? 1 : -1));
-    if (!moved && t.el && !calm) gsap.to(t.el, { y: 0, duration: 0.8, ease: 'elastic.out(1, 0.5)' });
+    if (!moved && t.el && !calm) gsap.to(t.el, { y: 0, duration: 0.6, ease: 'expo.out' });
   }
   stage.addEventListener('touchend', endTouch);
   stage.addEventListener('touchcancel', endTouch);
@@ -584,16 +669,20 @@
   tag.addEventListener('click', function () {
     if (calm) return;
     gsap.timeline()
-      .to(kick, { rotation: Math.random() < 0.5 ? -14 : 14, duration: 0.25, ease: 'power2.out' })
-      .to(kick, { rotation: 0, duration: 3, ease: 'elastic.out(1, 0.3)' });
+      .to(kick, { rotation: Math.random() < 0.5 ? -6 : 6, duration: 0.32, ease: 'power2.out' })
+      .to(kick, { rotation: 0, duration: 2.2, ease: settle });
   });
   /* 갈게요: the tag answers */
   goBtn.addEventListener('click', function () {
     if (STEPS[cur].sc !== 'final' || inkNow === 6) return;
-    if (calm) { setInk(6); return; }
+    /* the thank-you line is longer and the button label grows, so the card finds its place again */
+    layout();
+    var t = target('fin');
+    if (calm) { setInk(6); gsap.set(move, { x: t.x, y: t.y, scale: t.scale }); return; }
     gsap.timeline().add(flipTo(6), 0)
-      .to(kick, { rotation: -9, duration: 0.3, ease: 'power2.out' }, 0.05)
-      .to(kick, { rotation: 0, duration: 2.6, ease: 'elastic.out(1, 0.3)' }, 0.35);
+      .to(move, { x: t.x, y: t.y, scale: t.scale, duration: 0.8, ease: 'power3.inOut' }, 0)
+      .to(kick, { rotation: -5, duration: 0.32, ease: 'power2.out' }, 0.05)
+      .to(kick, { rotation: 0, duration: 2, ease: settle }, 0.37);
   });
 
   /* on a computer the tag sways when the mouse moves past it, like a draft (wide layouts only, where it hangs far from the words) */
@@ -624,7 +713,6 @@
   });
 
   /* start */
-  if (window.matchMedia('(pointer: fine)').matches) hint.textContent = '스크롤하면 다음 장면이 나와요';
   SCENES.forEach(function (k, i) { show(SC[k], i === 0); });
   items.forEach(function (it) { show(it, false); });
   gsap.set(objs, { autoAlpha: 0 });
@@ -642,14 +730,15 @@
     gsap.set('.band', { autoAlpha: 0 });
     gsap.set($$('.cv-ko > span, .cv-en .c, .cv-info .ln > span'), { yPercent: 110 });
     gsap.set($$('.cv-info .fd'), { autoAlpha: 0, y: 14 });
-    gsap.set(drop, { y: -window.innerHeight, rotation: -24 });
+    gsap.set(drop, { y: -window.innerHeight, rotation: -16 });
     gsap.set([bar, ctrl], { autoAlpha: 0 });
     d.classList.add('ready');
     gsap.timeline({ delay: 0.12, defaults: { ease: 'expo.out' } })
       .to('.cv-ko > span', { yPercent: 0, duration: 1.1 }, 0)
       .to('.cv-give .c', { yPercent: 0, duration: 1.25, stagger: 0.065 }, 0.1)
       .to('.cv-love .c', { yPercent: 0, duration: 1.25, stagger: 0.065 }, 0.26)
-      .to(drop, { y: 0, rotation: 0, duration: 2.4, ease: 'elastic.out(1, 0.36)' }, 0.3)
+      .to(drop, { y: 0, duration: 1.6, ease: 'expo.out' }, 0.3)
+      .to(drop, { rotation: 0, duration: 2.3, ease: settle }, 0.3)
       .to($$('.cv-info .ln > span'), { yPercent: 0, duration: 1, stagger: 0.08 }, 0.7)
       .to($$('.cv-info .fd'), { autoAlpha: 1, y: 0, duration: 0.9 }, 0.85)
       .to([bar, ctrl], { autoAlpha: 1, duration: 0.8 }, 0.9);

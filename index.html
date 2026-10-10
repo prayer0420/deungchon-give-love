@@ -20,7 +20,8 @@
 <link rel="preload" as="font" type="font/woff2" href="assets/fonts/bricolage.woff2" crossorigin>
 <link rel="preload" as="font" type="font/woff2" href="assets/fonts/paperlogy-800.woff2" crossorigin>
 <link rel="preload" as="image" href="assets/img/tag-hang.webp" type="image/webp">
-<link rel="stylesheet" href="assets/css/app.css?v=16">
+<link rel="dns-prefetch" href="https://t1.kakaocdn.net">
+<link rel="stylesheet" href="assets/css/app.css?v=17">
 <script>
 (function () {
   var d = document.documentElement;
@@ -30,7 +31,7 @@
 })();
 </script>
 <script defer src="assets/js/gsap.min.js"></script>
-<script defer src="assets/js/app.js?v=16"></script>
+<script defer src="assets/js/app.js?v=17"></script>
 </head>
 <body>
 <div class="stage" id="stage">
@@ -54,7 +55,7 @@
         </div>
       </div></div></div></div></div>
     </div>
-    <figure class="obj"><img src="assets/img/fx-mime.webp" width="400" height="383" alt="" decoding="async"></figure>
+    <figure class="obj"><img src="assets/img/fx-mime.webp?v=17" width="400" height="372" alt="" decoding="async"></figure>
     <figure class="obj"><img src="assets/img/fx-drum.webp" width="400" height="396" alt="" decoding="async"></figure>
     <figure class="obj"><img src="assets/img/fx-gift.webp" width="301" height="400" alt="" decoding="async"></figure>
   </div>
@@ -124,14 +125,14 @@
         <h2 class="h h-fin"><span class="ln"><span>당신이 오면</span></span><span class="ln"><span>완성돼요</span></span></h2>
         <div class="fin-b">
           <p class="p fd" id="goTxt">11월&nbsp;15일&nbsp;주일 오후&nbsp;2시&nbsp;30분, 본당에서 기다릴게요.</p>
-          <div class="acts fd"><button class="btn btn-solid" id="goBtn" type="button"><span>갈게요</span></button><button class="btn" id="shareBtn" type="button"><svg class="ic" viewBox="0 0 256 256" aria-hidden="true" focusable="false"><path fill="currentColor" d="M176,160a39.89,39.89,0,0,0-28.62,12.09l-46.1-29.63a39.8,39.8,0,0,0,0-28.92l46.1-29.63a40,40,0,1,0-8.66-13.45l-46.1,29.63a40,40,0,1,0,0,55.82l46.1,29.63A40,40,0,1,0,176,160Zm0-128a24,24,0,1,1-24,24A24,24,0,0,1,176,32ZM64,152a24,24,0,1,1,24-24A24,24,0,0,1,64,152Zm112,72a24,24,0,1,1,24-24A24,24,0,0,1,176,224Z"/></svg><span>초대장 보내기</span></button></div>
+          <div class="acts fd"><button class="btn btn-solid" id="goBtn" type="button"><span>갈게요</span></button><button class="btn" id="shareBtn" type="button"><svg class="ic" viewBox="0 0 256 256" aria-hidden="true" focusable="false"><path fill="currentColor" d="M140,128a12,12,0,1,1-12-12A12,12,0,0,1,140,128ZM84,116a12,12,0,1,0,12,12A12,12,0,0,0,84,116Zm88,0a12,12,0,1,0,12,12A12,12,0,0,0,172,116Zm60,12A104,104,0,0,1,79.12,219.82L45.07,231.17a16,16,0,0,1-20.24-20.24l11.35-34.05A104,104,0,1,1,232,128Zm-16,0A88,88,0,1,0,51.81,172.06a8,8,0,0,1,.66,6.54L40,216,77.4,203.53a7.85,7.85,0,0,1,2.53-.42,8,8,0,0,1,4,1.08A88,88,0,0,0,216,128Z"/></svg><span>카카오톡 공유하기</span></button></div>
         </div>
       </div>
     </section>
   </main>
 
   <div class="ctrl">
-    <p class="ctrl-hint" id="hint">화면을 위로 넘기면 다음 장면이 나와요</p>
+    <p class="cue" id="cue" aria-hidden="true"><i class="cue-l"></i><span class="cue-t"><span class="cue-k">SCROLL</span><span class="cue-n" id="cueN">다음 · 초대</span></span></p>
     <button class="next" id="nextBtn" type="button" aria-label="다음 장면으로"><span id="nextLabel">초대장 열기</span><svg class="ic" viewBox="0 0 256 256" aria-hidden="true" focusable="false"><path fill="currentColor" d="M205.66,149.66l-72,72a8,8,0,0,1-11.32,0l-72-72a8,8,0,0,1,11.32-11.32L120,196.69V40a8,8,0,0,1,16,0V196.69l58.34-58.35a8,8,0,0,1,11.32,11.32Z"/></svg></button>
   </div>
 </div>
@@ -146,7 +147,7 @@
       <li><a href="#s-when" data-step="3"><span class="mn">04</span><b>날짜</b><small>11월 15일 주일 오후 2:30</small></a></li>
       <li><a href="#s-prog" data-step="4"><span class="mn">05</span><b>프로그램</b><small>무언극 · 난타 · 웰컴키트</small></a></li>
       <li><a href="#s-place" data-step="7"><span class="mn">06</span><b>오시는 길</b><small>등촌교회 본당</small></a></li>
-      <li><a href="#s-final" data-step="8"><span class="mn">07</span><b>함께 가요</b><small>초대장 보내기</small></a></li>
+      <li><a href="#s-final" data-step="8"><span class="mn">07</span><b>함께 가요</b><small>카카오톡으로 초대장 보내기</small></a></li>
     </ol>
     <p class="menu-foot">주최 등촌교회 2청년회 · <a href="https://www.deungchon.org" target="_blank" rel="noopener">등촌교회 홈페이지</a></p>
   </div>
