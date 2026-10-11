@@ -1,5 +1,5 @@
 /* 등촌교회 2청년회 · 새생명축제 초대장 "새벽" (/dawn/)
-   Light particles gather into a word, a date, an open door, a mask, a drum, a gift, a pin and a sunrise as you scroll.
+   Light particles gather into a word, a date, an open door, a mask, a drum, a gift box, the church and a chair as you scroll.
    One fixed stage: the page scroll (eight snap points) only drives the morph. WebGL points, with a 2D canvas fallback. */
 (function () {
   'use strict';
@@ -188,11 +188,11 @@
     { top: '#090b12', bot: '#1b1b2a', g1: '#e0663e', g1i: 0.12, g2: '#4c3b48', g2i: 0.38, pc: '#fff2df', tint: 0.55, over: 0, hard: 0.1, size: 1.5, alpha: 1, amb: 1, tilt: 0.3 },
     { top: '#0c0e17', bot: '#2b2229', g1: '#ffb070', g1i: 0.15, g2: '#b2633d', g2i: 0.46, pc: '#fff2df', tint: 0.65, over: 0, hard: 0.1, size: 1.5, alpha: 1, amb: 1, tilt: 0.3 },
     { top: '#efe9df', bot: '#f3ddc3', g1: '#ffffff', g1i: 0.20, g2: '#f6b77c', g2i: 0.40, pc: '#1d1a16', tint: 1, over: 1, hard: 0.85, size: 1.02, alpha: 0.96, amb: 0.3, tilt: 0.14 },
-    { top: '#f5f0e8', bot: '#f4e6d2', g1: '#ffe4c6', g1i: 0.26, g2: '#f3a868', g2i: 0.32, pc: '#e2552c', tint: 1, over: 1, hard: 0.85, size: 0.95, alpha: 0.92, amb: 0.3, tilt: 0 }
+    { top: '#f5f0e8', bot: '#f4e6d2', g1: '#ffe4c6', g1i: 0.26, g2: '#f3a868', g2i: 0.32, pc: '#e2552c', tint: 1, over: 1, hard: 0.85, size: 1, alpha: 0.95, amb: 0.3, tilt: 0.1 }
   ];
   LOOK.forEach(function (L) { ['top', 'bot', 'g1', 'g2', 'pc'].forEach(function (k) { L[k] = hex(L[k]); }); });
-  var FILL = { title: 0.96, date: 0.9, door: 0.94, mask: 0.95, drum: 0.94, gift: 0.95, church: 0.96, sun: 0.98 };
-  var CAP = { title: 150, date: 220, door: 430, mask: 450, drum: 340, gift: 430, church: 450, sun: 300 };
+  var FILL = { title: 0.96, date: 0.9, door: 0.94, mask: 0.95, drum: 0.94, gift: 0.95, church: 0.96, chair: 0.94 };
+  var CAP = { title: 150, date: 220, door: 430, mask: 450, drum: 340, gift: 430, church: 450, chair: 430 };
   var FALLBACK = { mask: '무언극', church: '등촌교회' };
 
   /* ---------- particles ---------- */
@@ -336,20 +336,53 @@
     g.beginPath(); g.ellipse(kx, ky, 21, 16, 0, 0, Math.PI * 2); g.fillStyle = 'rgba(236,74,54,0.95)'; g.fill(); g.stroke();
     return c;
   }
-  function sunCanvas() {
-    var w = 900, h = 470, c = mk(w, h), g = c.getContext('2d');
-    var cx = 450, cy = 452, R = 292;
-    g.save(); g.beginPath(); g.rect(0, 0, w, cy - 6); g.clip();
-    for (var i = 0; i <= 16; i++) {
-      var an = Math.PI + (i / 16) * Math.PI;
-      g.beginPath(); g.moveTo(cx + Math.cos(an) * (R + 30), cy + Math.sin(an) * (R + 30)); g.lineTo(cx + Math.cos(an) * (R + 96), cy + Math.sin(an) * (R + 96));
-      g.lineWidth = 6; g.lineCap = 'round'; g.strokeStyle = 'rgba(238,140,62,0.75)'; g.stroke();
-    }
-    var rg = g.createRadialGradient(cx, cy, 0, cx, cy, R);
-    rg.addColorStop(0, 'rgba(222,74,36,1)'); rg.addColorStop(0.7, 'rgba(230,100,46,0.86)'); rg.addColorStop(1, 'rgba(240,148,66,0.6)');
-    g.beginPath(); g.arc(cx, cy, R, Math.PI, 0); g.closePath(); g.fillStyle = rg; g.fill();
-    g.restore();
-    g.fillStyle = 'rgba(30,26,22,1)'; g.fillRect(24, cy - 2, w - 48, 4);
+  /* 마지막 장면 "당신의 자리를 맡아 둘게요": a wooden chair in three-quarter view with a warm seat, on its own soft shadow.
+     Drawn back to front: far legs and the backrest, then the seat (which hides what is behind it), then the near legs. */
+  function chairCanvas() {
+    var w = 440, h = 630, c = mk(w, h), g = c.getContext('2d');
+    var ca = Math.cos(0.6), sa = Math.sin(0.6), cb = Math.cos(0.36), sb = Math.sin(0.36), S = 5, ox = 222, oy = 548;
+    var INK = 'rgba(43,35,29,1)', LX = 20.5, LZ = 19.5;
+    function P(q) { var xr = q[0] * ca + q[2] * sa, zr = -q[0] * sa + q[2] * ca; return [ox + xr * S, oy - (q[1] * cb + zr * sb) * S]; }
+    function poly(pts) { g.beginPath(); pts.forEach(function (q, k) { var v = P(q); if (k) g.lineTo(v[0], v[1]); else g.moveTo(v[0], v[1]); }); g.closePath(); }
+    function seg(a, b, wd) { var u = P(a), v = P(b); g.beginPath(); g.moveTo(u[0], u[1]); g.lineTo(v[0], v[1]); g.lineWidth = wd; g.stroke(); }
+    function zb(y) { return LZ + 3.5 * Math.max(0, y - 45) / 51; }
+    function bow(x) { return 1.8 * (1 - (x / LX) * (x / LX)); }
+    g.lineCap = 'round'; g.lineJoin = 'round';
+    /* the shadow it stands on */
+    var f0 = P([0, 0, 0]);
+    g.save(); g.translate(f0[0] + 12, f0[1] + 4); g.scale(1, 0.34);
+    var rg = g.createRadialGradient(0, 0, 0, 0, 0, 190);
+    rg.addColorStop(0, 'rgba(43,35,29,0.22)'); rg.addColorStop(0.55, 'rgba(43,35,29,0.09)'); rg.addColorStop(1, 'rgba(43,35,29,0)');
+    g.fillStyle = rg; g.beginPath(); g.arc(0, 0, 190, 0, Math.PI * 2); g.fill(); g.restore();
+    g.strokeStyle = INK;
+    /* far side: back-left leg and post, back and left stretchers */
+    seg([-LX, 0, LZ], [-LX, 45, LZ], 11);
+    seg([-LX, 45, LZ], [-LX, 96, zb(96)], 11);
+    seg([-LX, 17, LZ], [LX, 17, LZ], 5);
+    seg([-LX, 20, -LZ], [-LX, 20, LZ], 5);
+    /* backrest: a curved top rail and three slats, then the back-right leg and post */
+    var top = [], bot = [], k, x;
+    for (k = 0; k <= 12; k++) { x = -LX + 2 * LX * k / 12; top.push([x, 95, zb(95) + bow(x)]); bot.push([x, 83, zb(83) + bow(x)]); }
+    poly(top.concat(bot.reverse())); g.fillStyle = 'rgba(43,35,29,0.85)'; g.fill(); g.lineWidth = 4; g.stroke();
+    [-10, 0, 10].forEach(function (sx) { seg([sx, 49, 21], [sx, 83, zb(83) + bow(sx)], 8); });
+    seg([LX, 0, LZ], [LX, 45, LZ], 12);
+    seg([LX, 45, LZ], [LX, 96, zb(96)], 11);
+    /* the seat hides whatever is behind it */
+    var sT = [[-23.5, 49, -23], [23.5, 49, -23], [23.5, 49, 21.5], [-23.5, 49, 21.5]];
+    var sF = [[-23.5, 49, -23], [23.5, 49, -23], [23.5, 45, -23], [-23.5, 45, -23]];
+    var sR = [[23.5, 49, -23], [23.5, 49, 21.5], [23.5, 45, 21.5], [23.5, 45, -23]];
+    g.globalCompositeOperation = 'destination-out'; g.fillStyle = '#000';
+    [sT, sF, sR].forEach(function (q) { poly(q); g.fill(); });
+    g.globalCompositeOperation = 'source-over';
+    poly(sF); g.fillStyle = 'rgba(43,35,29,0.55)'; g.fill();
+    poly(sR); g.fillStyle = 'rgba(43,35,29,0.72)'; g.fill();
+    poly(sT); g.fillStyle = 'rgba(226,85,44,0.66)'; g.fill();
+    g.lineWidth = 5; [sT, sF, sR].forEach(function (q) { poly(q); g.stroke(); });
+    /* near side: front legs, front and right stretchers */
+    seg([-LX, 0, -LZ], [-LX, 44, -LZ], 13);
+    seg([LX, 0, -LZ], [LX, 44, -LZ], 14);
+    seg([-LX, 17, -LZ], [LX, 17, -LZ], 6);
+    seg([LX, 20, -LZ], [LX, 20, LZ], 6);
     return c;
   }
   function loadImg(src) { return new Promise(function (ok, no) { var im = new Image(); im.onload = function () { ok(im); }; im.onerror = no; im.src = src; }); }
@@ -390,7 +423,7 @@
         else if (k === 'door') c = doorCanvas();
         else if (k === 'drum') c = drumCanvas();
         else if (k === 'gift') c = giftCanvas();
-        else if (k === 'sun') c = sunCanvas();
+        else if (k === 'chair') c = chairCanvas();
         else c = M0[k] || textCanvas(FALLBACK[k] || '빛', 700, 0);
         try { SH[s] = sample(c, N, r); } catch (e) { SH[s] = sample(textCanvas(FALLBACK[k] || '빛', 700, 0), N, r); }
       });
@@ -430,7 +463,6 @@
       var sh = SH[s], k = KINDS[s];
       var sc = Math.min(Math.min((x1 - x0) / sh.asp, y1 - y0) * (FILL[k] || 0.9), (CAP[k] || 420) * dens);
       var cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
-      if (k === 'sun') cy = y1 - sc / 2;
       BOX[s] = { cx: cx, cy: cy, sc: sc, w: sc * sh.asp, h: sc, x0: x0, x1: x1, y0: y0, y1: y1 };
       var P = sh.p, X = SX[s], Y = SY[s];
       for (var i = 0; i < N; i++) { X[i] = cx + P[i * 2] * sc; Y[i] = cy + P[i * 2 + 1] * sc; }
@@ -546,7 +578,7 @@
     m.depth = B.sc * 0.17;
     if (!calm) {
       if (k === 'drum') m.scale = 1 + 0.03 * beat + 0.08 * punch;
-      else if (k === 'sun') m.scale = 1 + 0.05 * punch;
+      else if (k === 'chair') { m.scale = 1 + 0.03 * punch; m.dy = -punch * B.sc * 0.04; }
       else if (k === 'title') m.scale = 1 + Math.sin(time * 0.7) * 0.006;
     }
   }
