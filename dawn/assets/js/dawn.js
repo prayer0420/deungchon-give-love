@@ -186,31 +186,33 @@
     { top: '#07080d', bot: '#10131e', g1: '#ffb47c', g1i: 0.20, g2: '#2a3457', g2i: 0.26, pc: '#fff2df', tint: 0.75, over: 0, hard: 0.1, size: 1.5, alpha: 0.95, amb: 1, tilt: 0.3 },
     { top: '#080a10', bot: '#131726', g1: '#aab7e2', g1i: 0.13, g2: '#383f60', g2i: 0.32, pc: '#f4f2fb', tint: 0.2, over: 0, hard: 0.1, size: 1.5, alpha: 1, amb: 1, tilt: 0.36 },
     { top: '#090b12', bot: '#1b1b2a', g1: '#e0663e', g1i: 0.12, g2: '#4c3b48', g2i: 0.38, pc: '#fff2df', tint: 0.55, over: 0, hard: 0.1, size: 1.5, alpha: 1, amb: 1, tilt: 0.3 },
-    { top: '#0c0e17', bot: '#2b2229', g1: '#ffb070', g1i: 0.15, g2: '#b2633d', g2i: 0.46, pc: '#fff2df', tint: 0.6, over: 0, hard: 0.1, size: 1.5, alpha: 1, amb: 1, tilt: 0.34 },
-    { top: '#efe9df', bot: '#f3ddc3', g1: '#ffffff', g1i: 0.20, g2: '#f6b77c', g2i: 0.40, pc: '#1d1a16', tint: 0, over: 1, hard: 0.85, size: 0.9, alpha: 0.86, amb: 0.3, tilt: 0.18 },
+    { top: '#0c0e17', bot: '#2b2229', g1: '#ffb070', g1i: 0.15, g2: '#b2633d', g2i: 0.46, pc: '#fff2df', tint: 0.65, over: 0, hard: 0.1, size: 1.5, alpha: 1, amb: 1, tilt: 0.3 },
+    { top: '#efe9df', bot: '#f3ddc3', g1: '#ffffff', g1i: 0.20, g2: '#f6b77c', g2i: 0.40, pc: '#1d1a16', tint: 1, over: 1, hard: 0.85, size: 1.02, alpha: 0.96, amb: 0.3, tilt: 0.14 },
     { top: '#f5f0e8', bot: '#f4e6d2', g1: '#ffe4c6', g1i: 0.26, g2: '#f3a868', g2i: 0.32, pc: '#e2552c', tint: 1, over: 1, hard: 0.85, size: 0.95, alpha: 0.92, amb: 0.3, tilt: 0 }
   ];
   LOOK.forEach(function (L) { ['top', 'bot', 'g1', 'g2', 'pc'].forEach(function (k) { L[k] = hex(L[k]); }); });
-  var FILL = { title: 0.96, date: 0.9, door: 0.94, mask: 0.95, drum: 0.94, gift: 0.95, pin: 0.88, sun: 0.98 };
-  var CAP = { title: 210, date: 220, door: 430, mask: 450, drum: 340, gift: 450, pin: 370, sun: 300 };
-  var FALLBACK = { mask: '무언극', drum: '난타', gift: '선물' };
+  var FILL = { title: 0.96, date: 0.9, door: 0.94, mask: 0.95, drum: 0.94, gift: 0.95, church: 0.96, sun: 0.98 };
+  var CAP = { title: 150, date: 220, door: 430, mask: 450, drum: 340, gift: 430, church: 450, sun: 300 };
+  var FALLBACK = { mask: '무언극', church: '등촌교회' };
 
   /* ---------- particles ---------- */
   var area = window.innerWidth * window.innerHeight;
   var N = Math.round(clamp(area / 68, 4400, 10000));
   if (touch) N = Math.min(N, 5800);
   var PX = new Float32Array(N), PY = new Float32Array(N), VX = new Float32Array(N), VY = new Float32Array(N);
-  var Z = new Float32Array(N), DEL = new Float32Array(N), SW = new Float32Array(N), SZ = new Float32Array(N), AL = new Float32Array(N), GLW = new Float32Array(N);
+  var Z = new Float32Array(N), DEL = new Float32Array(N), SW = new Float32Array(N), BR = new Float32Array(N), SZ = new Float32Array(N), AL = new Float32Array(N), GLW = new Float32Array(N);
   var F1 = new Float32Array(N), F2 = new Float32Array(N), PH = new Float32Array(N), AMB = new Uint8Array(N), DXn = new Float32Array(N), DYn = new Float32Array(N);
   var SEEDX = new Float32Array(N), SEEDY = new Float32Array(N);
-  var BUF = new Float32Array(N * 7);
-  var DELMAX = 0.3, SEED_HOLD = 0.8;
+  /* each particle is one point plus up to two fading copies behind it while it moves fast (light trails) */
+  var BUF = new Float32Array(N * 21), DRAWN = N;
+  var DELMAX = 0.36, SEED_HOLD = 0.8;
   (function () {
     var r = mulberry(20261115);
     for (var i = 0; i < N; i++) {
       Z[i] = r() * 2 - 1;
       DEL[i] = r() * DELMAX;
       SW[i] = r() * 2 - 1;
+      BR[i] = 0.35 + r() * 1.1;
       var q = r(); SZ[i] = 1 + q * q * 2.4;
       AL[i] = 0.35 + r() * 0.65;
       F1[i] = 0.3 + r() * 0.9; F2[i] = 0.3 + r() * 0.9; PH[i] = r() * 6.2831853;
@@ -289,15 +291,49 @@
     });
     return c;
   }
-  function pinCanvas() {
-    var w = 600, h = 600, c = mk(w, h), g = c.getContext('2d');
-    var cx = 300, cy = 178, R = 118, tip = 432, D = tip - cy, aa = Math.acos(R / D);
-    g.strokeStyle = '#fff';
-    [[96, 0.95], [176, 0.62], [256, 0.34]].forEach(function (q) { g.beginPath(); g.ellipse(cx, tip + 8, q[0], q[0] * 0.26, 0, 0, Math.PI * 2); g.lineWidth = 4; g.globalAlpha = q[1]; g.stroke(); });
-    g.globalAlpha = 1;
-    g.beginPath(); g.moveTo(cx, tip); g.arc(cx, cy, R, Math.PI / 2 + aa, Math.PI / 2 - aa + Math.PI * 2, false); g.closePath();
-    g.fillStyle = 'rgba(255,255,255,0.16)'; g.fill(); g.lineWidth = 11; g.lineJoin = 'round'; g.stroke();
-    g.beginPath(); g.arc(cx, cy, R * 0.4, 0, Math.PI * 2); g.lineWidth = 9; g.stroke();
+  /* 웰컴키트: a gift box with a lid and a red ribbon tied in a bow, seen a little from above */
+  function giftCanvas() {
+    var c = mk(420, 430), g = c.getContext('2d');
+    var DX = 70, DY = -50, rw = 22;
+    var bx0 = 120, bx1 = 400, by1 = 560, lx0 = 108, lx1 = 412, ly0 = 288, ly1 = 340, cx = 260;
+    function poly(pts) { g.beginPath(); pts.forEach(function (q, k) { if (k) g.lineTo(q[0], q[1]); else g.moveTo(q[0], q[1]); }); g.closePath(); }
+    function L(u) { return [lx0 + DX * u, ly0 + DY * u]; }
+    function R(u) { return [lx1 + DX * u, ly0 + DY * u]; }
+    g.translate(-88, -158);
+    g.lineJoin = 'round'; g.lineCap = 'round';
+    /* faces: front, side (darker), lid top */
+    poly([[bx0, ly1], [bx1, ly1], [bx1, by1], [bx0, by1]]); g.fillStyle = 'rgba(244,226,196,0.07)'; g.fill();
+    poly([[bx1, ly1 + DY * 0.24], [bx1 + DX, ly1 + DY], [bx1 + DX, by1 + DY], [bx1, by1]]); g.fillStyle = 'rgba(244,226,196,0.15)'; g.fill();
+    poly([L(0), L(1), R(1), R(0)]); g.fillStyle = 'rgba(244,226,196,0.09)'; g.fill();
+    poly([[lx0, ly0], [lx1, ly0], [lx1, ly1], [lx0, ly1]]); g.fillStyle = 'rgba(244,226,196,0.1)'; g.fill();
+    poly([R(0), R(1), [lx1 + DX, ly1 + DY], [lx1, ly1]]); g.fillStyle = 'rgba(244,226,196,0.18)'; g.fill();
+    /* ribbon: down the front, across the lid both ways, down the side */
+    g.fillStyle = 'rgba(232,66,48,0.6)';
+    poly([[cx - rw, ly0], [cx + rw, ly0], [cx + rw, by1], [cx - rw, by1]]); g.fill();
+    poly([[cx - rw, ly0], [cx + rw, ly0], [cx + rw + DX, ly0 + DY], [cx - rw + DX, ly0 + DY]]); g.fill();
+    poly([L(0.36), R(0.36), R(0.64), L(0.64)]); g.fill();
+    poly([R(0.36), R(0.64), [lx1 + DX * 0.64, ly1 + DY * 0.64], [lx1 + DX * 0.36, ly1 + DY * 0.36]]); g.fill();
+    poly([[bx1 + DX * 0.36, ly1 + DY * 0.36], [bx1 + DX * 0.64, ly1 + DY * 0.64], [bx1 + DX * 0.64, by1 + DY * 0.64], [bx1 + DX * 0.36, by1 + DY * 0.36]]); g.fill();
+    /* box edges */
+    g.strokeStyle = 'rgba(244,226,196,1)'; g.lineWidth = 9;
+    poly([L(0), L(1), R(1), R(0)]); g.stroke();
+    poly([[lx0, ly0], [lx1, ly0], [lx1, ly1], [lx0, ly1]]); g.stroke();
+    poly([R(0), R(1), [lx1 + DX, ly1 + DY], [lx1, ly1]]); g.stroke();
+    g.beginPath(); g.moveTo(bx0, ly1); g.lineTo(bx0, by1); g.lineTo(bx1, by1); g.lineTo(bx1 + DX, by1 + DY); g.lineTo(bx1 + DX, ly1 + DY + 2); g.moveTo(bx1, ly1); g.lineTo(bx1, by1); g.stroke();
+    g.strokeStyle = 'rgba(232,66,48,1)'; g.lineWidth = 4;
+    [[cx - rw, ly0, cx - rw, by1], [cx + rw, ly0, cx + rw, by1]].forEach(function (q) { g.beginPath(); g.moveTo(q[0], q[1]); g.lineTo(q[2], q[3]); g.stroke(); });
+    /* the bow: two loops, two tails, a knot */
+    var kx = cx + DX * 0.5, ky = ly0 + DY * 0.5;
+    g.fillStyle = 'rgba(232,66,48,0.5)'; g.strokeStyle = 'rgba(236,74,54,1)'; g.lineWidth = 7;
+    [-1, 1].forEach(function (sd) {
+      g.beginPath(); g.moveTo(kx, ky - 4);
+      g.bezierCurveTo(kx + sd * 45, ky - 92, kx + sd * 138, ky - 96, kx + sd * 124, ky - 30);
+      g.bezierCurveTo(kx + sd * 114, ky + 10, kx + sd * 42, ky + 12, kx, ky + 2);
+      g.closePath(); g.fill(); g.stroke();
+      g.beginPath(); g.moveTo(kx + sd * 6, ky - 6); g.quadraticCurveTo(kx + sd * 64, ky - 54, kx + sd * 104, ky - 30); g.lineWidth = 3; g.stroke(); g.lineWidth = 7;
+      g.beginPath(); g.moveTo(kx - sd * 2, ky + 8); g.lineTo(kx + sd * 52, ky + 76); g.lineTo(kx + sd * 32, ky + 72); g.lineTo(kx + sd * 26, ky + 92); g.lineTo(kx + sd * 10, ky + 10); g.closePath(); g.fill(); g.stroke();
+    });
+    g.beginPath(); g.ellipse(kx, ky, 21, 16, 0, 0, Math.PI * 2); g.fillStyle = 'rgba(236,74,54,0.95)'; g.fill(); g.stroke();
     return c;
   }
   function sunCanvas() {
@@ -342,18 +378,18 @@
   var SH = new Array(S), SX = [], SY = [], BOX = new Array(S), ready = false;
   for (var s0 = 0; s0 < S; s0++) { SX.push(new Float32Array(N)); SY.push(new Float32Array(N)); }
   function buildShapes() {
-    var fontP = document.fonts && document.fonts.load ? Promise.all([document.fonts.load('700 100px Hahmlet', '새생명'), document.fonts.load('700 100px Hahmlet', '11.15')]).catch(function () {}) : Promise.resolve();
+    var fontP = document.fonts && document.fonts.load ? Promise.all([document.fonts.load('700 100px Hahmlet', '새생명축제'), document.fonts.load('700 100px Hahmlet', '11.15')]).catch(function () {}) : Promise.resolve();
     var fontsReady = Promise.race([fontP, new Promise(function (ok) { setTimeout(ok, 2500); })]);
-    var maps = ['mask', 'gift'].map(function (k) { return loadImg('assets/img/map-' + k + '.webp?v=1').then(imgCanvas).catch(function () { return null; }); });
+    var maps = ['mask', 'church'].map(function (k) { return loadImg('assets/img/map-' + k + '.webp?v=2').then(imgCanvas).catch(function () { return null; }); });
     return Promise.all([fontsReady].concat(maps)).then(function (res) {
-      var M0 = { mask: res[1], gift: res[2] }, r = mulberry(7);
+      var M0 = { mask: res[1], church: res[2] }, r = mulberry(7);
       KINDS.forEach(function (k, s) {
         var c;
-        if (k === 'title') c = textCanvas('새생명', 700, -0.02);
+        if (k === 'title') c = textCanvas('새생명축제', 700, -0.03);
         else if (k === 'date') c = textCanvas('11.15', 700, -0.01);
         else if (k === 'door') c = doorCanvas();
         else if (k === 'drum') c = drumCanvas();
-        else if (k === 'pin') c = pinCanvas();
+        else if (k === 'gift') c = giftCanvas();
         else if (k === 'sun') c = sunCanvas();
         else c = M0[k] || textCanvas(FALLBACK[k] || '빛', 700, 0);
         try { SH[s] = sample(c, N, r); } catch (e) { SH[s] = sample(textCanvas(FALLBACK[k] || '빛', 700, 0), N, r); }
@@ -454,14 +490,14 @@
     gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     gl.useProgram(ptProg);
     gl.bindBuffer(gl.ARRAY_BUFFER, ptBuf);
-    gl.bufferSubData(gl.ARRAY_BUFFER, 0, BUF);
+    gl.bufferSubData(gl.ARRAY_BUFFER, 0, BUF.subarray(0, DRAWN * 7));
     gl.enableVertexAttribArray(0); gl.enableVertexAttribArray(1); gl.enableVertexAttribArray(2);
     gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 28, 0);
     gl.vertexAttribPointer(1, 1, gl.FLOAT, false, 28, 8);
     gl.vertexAttribPointer(2, 4, gl.FLOAT, false, 28, 12);
     gl.uniform2f(U.ptuRes, cw, ch); gl.uniform1f(U.ptuDpr, dpr);
     gl.uniform1f(U.ptuHard, L.hard); gl.uniform1f(U.ptuOver, L.over);
-    gl.drawArrays(gl.POINTS, 0, N);
+    gl.drawArrays(gl.POINTS, 0, DRAWN);
   }
   function rgb(c, a) { return 'rgba(' + Math.round(c[0] * 255) + ',' + Math.round(c[1] * 255) + ',' + Math.round(c[2] * 255) + ',' + (a === undefined ? 1 : a) + ')'; }
   var N2 = Math.min(N, 2600);
@@ -473,9 +509,9 @@
     g.fillStyle = grd; g.fillRect(0, 0, cw, ch);
     g.globalCompositeOperation = L.over < 0.5 ? 'lighter' : 'source-over';
     g.fillStyle = rgb(L.pc);
-    var step = N / N2;
+    var stp = N / N2;
     for (var k = 0; k < N2; k++) {
-      var o = Math.floor(k * step) * 7, s = Math.max(1, BUF[o + 2] * (L.over < 0.5 ? 0.6 : 0.8));
+      var o = Math.floor(k * stp) * 7, s = Math.max(1, BUF[o + 2] * (L.over < 0.5 ? 0.6 : 0.8));
       g.globalAlpha = BUF[o + 6] * 0.9;
       g.fillRect(BUF[o] - s / 2, BUF[o + 1] - s / 2, s, s);
     }
@@ -483,8 +519,9 @@
   }
 
   /* ---------- motion ---------- */
-  var time = 0, last = 0, p = 0, pRaw = 0, pv = 0, introT = calm ? 9 : 0, burst = calm, beat = 0, punch = 0;
-  var ptr = { x: -1e4, y: -1e4, on: false, nx: 0.5, ny: 0.5, sx: 0.5, sy: 0.5, moved: 0 };
+  var time = 0, last = 0, p = 0, pRaw = 0, pv = 0, dirSign = 1, introT = calm ? 9 : 0, burst = calm, beat = 0, punch = 0, secPulse = 0, lastOver = 0;
+  var ptr = { x: -1e4, y: -1e4, on: false, nx: 0.5, ny: 0.5, sx: 0.5, sy: 0.5, dvx: 0, dvy: 0, lx: null, ly: null };
+  var gyro = null, gyroS = { x: 0, y: 0 };
   var M = [{}, {}], TX = 0, TY = 0, TS = 1;
   var LM = { top: [0, 0, 0], bot: [0, 0, 0], g1: [0, 0, 0], g2: [0, 0, 0], pc: [0, 0, 0] };
   function mixLook(a, b, e) {
@@ -499,17 +536,20 @@
   function modFor(s, m) {
     var B = BOX[s], L = LOOK[s], k = KINDS[s];
     m.cx = B.cx; m.cy = B.cy; m.scale = 1; m.dy = 0;
-    var amt = calm ? 0 : L.tilt;
-    var ax = touch ? Math.sin(time * 0.42) * 0.55 + (ptr.sx - 0.5) * 0.6 : (ptr.sx - 0.5) * 1.15;
-    var ay = touch ? Math.cos(time * 0.33) * 0.22 : (ptr.sy - 0.5) * 0.6;
+    var amt = calm ? 0 : L.tilt, ax, ay;
+    if (touch) {
+      ax = gyro ? gyroS.x * 0.9 : Math.sin(time * 0.42) * 0.55 + (ptr.sx - 0.5) * 0.6;
+      ay = gyro ? gyroS.y * 0.5 : Math.cos(time * 0.33) * 0.22;
+    } else { ax = (ptr.sx - 0.5) * 1.15; ay = (ptr.sy - 0.5) * 0.6; }
     var th = ax * amt, ph = -ay * amt * 0.7;
     m.ct = Math.cos(th); m.st = Math.sin(th); m.cp = Math.cos(ph); m.sp = Math.sin(ph);
     m.depth = B.sc * 0.17;
     if (!calm) {
-      if (k === 'drum') m.scale = 1 + 0.028 * beat + 0.08 * punch;
+      if (k === 'drum') { m.scale = 1 + 0.045 * beat + 0.08 * punch; m.dy = -beat * B.sc * 0.016; }
       else if (k === 'sun') m.scale = 1 + Math.sin(time * 0.9) * 0.006 + 0.05 * punch;
-      else if (k === 'pin') m.dy = Math.sin(time * 1.3) * B.sc * 0.014;
-      else if (k === 'title' || k === 'date') m.scale = 1 + Math.sin(time * 0.7) * 0.005;
+      else if (k === 'date') m.scale = 1 + 0.02 * secPulse;
+      else if (k === 'title') m.scale = 1 + Math.sin(time * 0.7) * 0.006;
+      else if (k === 'gift') m.dy = Math.sin(time * 1.6) * B.sc * 0.008;
     }
   }
   function project(m, x, y, z) {
@@ -526,9 +566,18 @@
     var L = mixLook(a, b, smooth(0.2, 0.8, t));
     var seed = !ready || introT < SEED_HOLD;
     if (!seed) { modFor(a, M[0]); modFor(b, M[1]); }
-    var damp = Math.pow(0.86, f), kk = 0.05 * f;
-    var swAmp = calm ? 0 : 0.34, jit = calm ? 0 : lerp(0.9, 0.3, L.over), night = L.over < 0.5;
-    var pr = clamp(Math.min(Wd, Ht) * 0.17, 70, 170), pr2 = pr * pr, rep = touch ? 2.4 : 1.8;
+    var md = Math.min(Wd, Ht), night = L.over < 0.5;
+    var damp = Math.pow(0.845, f), kk = 0.068 * f;
+    /* in flight: a curved path whose turn follows the scroll direction, plus a burst away from the middle */
+    var swAmp = calm ? 0 : 0.42 * dirSign, bAmp = calm ? 0 : md * 0.2;
+    var bcx = seed ? 0 : (M[0].cx + M[1].cx) / 2, bcy = seed ? 0 : (M[0].cy + M[1].cy) / 2;
+    /* at rest: a slow flowing field, a light wave sweeping across the shape */
+    var flowA = calm ? 0 : lerp(2.6, 1.0, L.over), jit = calm ? 0 : 0.45;
+    var restK = calm || seed ? 0 : 1 - smooth(0.03, 0.18, Math.min(t, 1 - t));
+    var sN = clamp(Math.round(p), 0, LAST), wb = BOX[sN];
+    var wPos = ((time % 3.6) / 3.6) * 1.5 - 0.25, wx0 = wb ? wb.cx - wb.w / 2 : 0, wW = wb ? Math.max(40, wb.w) : Wd;
+    var wAmp = restK * (night ? 6 : 3);
+    var pr = clamp(md * 0.2, 80, 200), pr2 = pr * pr, rep = touch ? 2.2 : 1.6, swr = 1.4, drag = 0.15;
     var pon = ptr.on && !calm && burst;
     var gd = Math.pow(0.9, f);
     var Ax = SX[a], Ay = SY[a], Bx = SX[b], By = SY[b];
@@ -538,44 +587,80 @@
     var pcR = L.pc[0], pcG = L.pc[1], pcB = L.pc[2], tint = L.tint;
     var szF = L.size, alF = L.alpha * (calm ? 1 : smooth(0, 0.5, introT)), ambA = L.amb * 0.55;
     var fadeCalm = calm && a !== b ? Math.abs(t * 2 - 1) : 1;
-    var M0 = M[0], M1 = M[1];
+    var M0 = M[0], M1 = M[1], go = N * 7, G = 0, trails = !calm;
     for (var i = 0, o = 0; i < N; i++, o += 7) {
-      var tx, ty, ts = 1, cr = pcR, cg = pcG, cb = pcB;
+      var tx, ty, ts = 1, cr = pcR, cg = pcG, cb = pcB, amb = !seed && AMB[i];
       if (seed) {
         tx = scx + SEEDX[i] * rr; ty = scy + SEEDY[i] * rr;
-      } else if (AMB[i]) {
+      } else if (amb) {
+        /* dust: drifts up and moves past at its own depth as you scroll (parallax) */
         tx = DXn[i] * Wd + Math.sin(time * F1[i] * 0.25 + PH[i]) * 24;
-        ty = ((DYn[i] * Ht - time * (3 + F2[i] * 6)) % Ht + Ht) % Ht;
+        ty = DYn[i] * Ht - time * (3 + F2[i] * 6) - p * Ht * (0.3 + 0.22 * (Z[i] + 1));
+        ty = (ty % Ht + Ht) % Ht;
       } else {
         var ti = (t - DEL[i]) / (1 - DELMAX); ti = ti < 0 ? 0 : ti > 1 ? 1 : ti;
         var ei = calm ? (t < 0.5 ? 0 : 1) : ti * ti * (3 - 2 * ti);
         project(M0, Ax[i], Ay[i], Z[i]); var ax = TX, ay = TY, as = TS;
         project(M1, Bx[i], By[i], Z[i]);
         tx = ax + (TX - ax) * ei; ty = ay + (TY - ay) * ei; ts = as + (TS - as) * ei;
-        if (swAmp && ei > 0 && ei < 1) { var sw = Math.sin(3.1415927 * ei) * SW[i] * swAmp; tx -= (TY - ay) * sw; ty += (TX - ax) * sw; }
+        if (swAmp && ei > 0 && ei < 1) {
+          var sn = Math.sin(3.1415927 * ei), sw = sn * SW[i] * swAmp;
+          tx -= (TY - ay) * sw; ty += (TX - ax) * sw;
+          var ox = tx - bcx, oy = ty - bcy, ol = Math.sqrt(ox * ox + oy * oy) + 1, bb = sn * bAmp * BR[i];
+          tx += ox / ol * bb; ty += oy / ol * bb;
+        }
+        if (wAmp > 0.01) {
+          var wd = (tx - wx0) / wW - wPos;
+          if (wd > -0.07 && wd < 0.07) { var wa = 1 - (wd < 0 ? -wd : wd) / 0.07; ty -= wa * wAmp; var wg = wa * 0.55 * restK; if (wg > GLW[i]) GLW[i] = wg; }
+        }
         var c3 = i * 3;
         cr += (CA[c3] + (CB[c3] - CA[c3]) * ei - pcR) * tint;
         cg += (CA[c3 + 1] + (CB[c3 + 1] - CA[c3 + 1]) * ei - pcG) * tint;
         cb += (CA[c3 + 2] + (CB[c3 + 2] - CA[c3 + 2]) * ei - pcB) * tint;
       }
-      if (jit) { tx += Math.sin(time * F1[i] + PH[i]) * jit; ty += Math.cos(time * F2[i] + PH[i]) * jit; }
+      if (flowA && !amb) {
+        tx += Math.sin(ty * 0.017 + time * 1.3 + PH[i] * 0.3) * flowA + Math.sin(time * F1[i] + PH[i]) * jit;
+        ty += Math.cos(tx * 0.015 + time * 1.1 + PH[i] * 0.3) * flowA + Math.cos(time * F2[i] + PH[i]) * jit;
+      }
       var x = PX[i], y = PY[i], vx = VX[i], vy = VY[i];
       if (calm) { x = tx; y = ty; vx = 0; vy = 0; }
-      else {
+      else if (amb) {
+        vx = (tx - x) / f; vy = (ty - y) / f;
+        if (vy > Ht * 0.3 || vy < -Ht * 0.3) { vx = 0; vy = 0; }
+        x = tx; y = ty;
+      } else {
         vx += (tx - x) * kk; vy += (ty - y) * kk;
         if (pon) {
+          /* the pointer pushes light away, stirs it round, and drags it along when it moves */
           var qx = x - ptr.x, qy = y - ptr.y, q2 = qx * qx + qy * qy;
-          if (q2 < pr2) { var q = Math.sqrt(q2) + 0.5, fo = 1 - q / pr; if (fo > GLW[i]) GLW[i] = fo; fo = fo * fo * rep * f; vx += qx / q * fo; vy += qy / q * fo; }
+          if (q2 < pr2) {
+            var q = Math.sqrt(q2) + 0.5, fo = 1 - q / pr, f2 = fo * fo * f;
+            if (fo > GLW[i]) GLW[i] = fo;
+            vx += (qx * rep - qy * swr) / q * f2 + ptr.dvx * fo * drag * f;
+            vy += (qy * rep + qx * swr) / q * f2 + ptr.dvy * fo * drag * f;
+          }
         }
         vx *= damp; vy *= damp; x += vx * f; y += vy * f;
       }
       PX[i] = x; PY[i] = y; VX[i] = vx; VY[i] = vy;
       var gw = GLW[i] *= gd;
-      var al = AL[i] * alF * (AMB[i] ? ambA : 1) * (1 + gw * 1.4) * fadeCalm;
+      var al = AL[i] * alF * (amb ? ambA : 1) * (1 + gw * 1.4) * fadeCalm;
       if (night && !calm) al *= 0.78 + 0.22 * Math.sin(time * F1[i] * 2.6 + PH[i]);
-      BUF[o] = x; BUF[o + 1] = y; BUF[o + 2] = SZ[i] * szF * ts * (1 + gw * 0.7);
-      BUF[o + 3] = cr; BUF[o + 4] = cg; BUF[o + 5] = cb; BUF[o + 6] = al > 1 ? 1 : al;
+      if (al > 1) al = 1;
+      var sz = SZ[i] * szF * ts * (1 + gw * 0.7);
+      BUF[o] = x; BUF[o + 1] = y; BUF[o + 2] = sz; BUF[o + 3] = cr; BUF[o + 4] = cg; BUF[o + 5] = cb; BUF[o + 6] = al;
+      if (trails) {
+        var sp2 = vx * vx + vy * vy;
+        if (sp2 > 1.6) {
+          var sk = sp2 > 144 ? 1 : (Math.sqrt(sp2) - 1.26) / 10.74;
+          BUF[go] = x - vx * 1.3; BUF[go + 1] = y - vy * 1.3; BUF[go + 2] = sz * 0.85; BUF[go + 3] = cr; BUF[go + 4] = cg; BUF[go + 5] = cb; BUF[go + 6] = al * 0.5 * sk;
+          BUF[go + 7] = x - vx * 2.6; BUF[go + 8] = y - vy * 2.6; BUF[go + 9] = sz * 0.7; BUF[go + 10] = cr; BUF[go + 11] = cg; BUF[go + 12] = cb; BUF[go + 13] = al * 0.26 * sk;
+          go += 14; G += 2;
+        }
+      }
     }
+    DRAWN = N + G;
+    lastOver = L.over;
     return L;
   }
   function doBurst() {
@@ -583,7 +668,7 @@
     if (calm) return;
     var r = mulberry(99);
     for (var i = 0; i < N; i++) {
-      var an = Math.atan2(SEEDY[i], SEEDX[i]) + (r() - 0.5) * 0.7, sp = 4 + r() * 20 * (0.45 + Math.abs(Z[i]));
+      var an = Math.atan2(SEEDY[i], SEEDX[i]) + (r() - 0.5) * 0.7, sp = 5 + r() * 24 * (0.45 + Math.abs(Z[i]));
       VX[i] += Math.cos(an) * sp; VY[i] += Math.sin(an) * sp;
     }
     if (BOX[0]) ring(BOX[0].cx, BOX[0].cy, true);
@@ -596,14 +681,16 @@
     fx.appendChild(r);
     setTimeout(function () { r.remove(); }, 1400);
   }
+  var spin = 1;
   function shock(x, y, power) {
     if (calm || !burst) return;
     var R = Math.max(Wd, Ht) * 0.5 * power;
+    spin = -spin;
     for (var i = 0; i < N; i++) {
       var qx = PX[i] - x, qy = PY[i] - y, q2 = qx * qx + qy * qy;
       if (q2 < R * R) {
-        var q = Math.sqrt(q2) + 1, k = 1 - q / R; k = k * k * 30 * power * (0.55 + 0.45 * Math.abs(Z[i]));
-        VX[i] += qx / q * k; VY[i] += qy / q * k;
+        var q = Math.sqrt(q2) + 1, k = 1 - q / R; k = k * k * 32 * power * (0.55 + 0.45 * Math.abs(Z[i]));
+        VX[i] += (qx - qy * 0.45 * spin) / q * k; VY[i] += (qy + qx * 0.45 * spin) / q * k;
         var gk = k / 24; if (gk > GLW[i]) GLW[i] = gk > 1 ? 1 : gk;
       }
     }
@@ -693,24 +780,30 @@
     if (co !== cueOn) { cueOn = co; cue.style.opacity = String(co); }
   }
 
-  /* ---------- scroll, pointer, taps ---------- */
+  /* ---------- scroll, pointer, tilt, taps ---------- */
   function secH() { var t = track.firstElementChild; return (t && t.getBoundingClientRect().height) || window.innerHeight; }
   function readScroll() { pRaw = clamp((window.scrollY || window.pageYOffset || 0) / secH(), 0, LAST); }
   function goTo(n, instant) { window.scrollTo({ top: Math.round(n * secH()), behavior: instant || calm ? 'auto' : 'smooth' }); }
   rail.forEach(function (b) { b.addEventListener('click', function () { goTo(+b.getAttribute('data-to')); }); });
-  window.addEventListener('pointermove', function (e) {
-    if (e.pointerType === 'touch') return;
-    ptr.x = e.clientX; ptr.y = e.clientY; ptr.on = true; ptr.nx = e.clientX / Wd; ptr.ny = e.clientY / Ht;
+  function setPtr(x, y) {
+    if (ptr.lx !== null) { ptr.dvx = ptr.dvx * 0.4 + clamp(x - ptr.lx, -40, 40) * 0.6; ptr.dvy = ptr.dvy * 0.4 + clamp(y - ptr.ly, -40, 40) * 0.6; }
+    ptr.lx = x; ptr.ly = y;
+    ptr.x = x; ptr.y = y; ptr.on = true; ptr.nx = x / Wd; ptr.ny = y / Ht;
+  }
+  window.addEventListener('pointermove', function (e) { if (e.pointerType !== 'touch') setPtr(e.clientX, e.clientY); }, { passive: true });
+  document.addEventListener('mouseleave', function () { ptr.on = false; ptr.lx = null; ptr.nx = 0.5; ptr.ny = 0.5; });
+  window.addEventListener('touchstart', function (e) { var t0 = e.touches && e.touches[0]; if (!t0) return; ptr.lx = null; setPtr(t0.clientX, t0.clientY); }, { passive: true });
+  window.addEventListener('touchmove', function (e) { var t0 = e.touches && e.touches[0]; if (t0) setPtr(t0.clientX, t0.clientY); }, { passive: true });
+  window.addEventListener('touchend', function () { setTimeout(function () { ptr.on = false; ptr.lx = null; ptr.nx = 0.5; ptr.ny = 0.5; }, 140); }, { passive: true });
+  /* phones that report tilt without asking (Android) turn the 3D shapes; others sway by themselves */
+  window.addEventListener('deviceorientation', function (e) {
+    if (e.gamma === null || e.gamma === undefined || e.beta === null) return;
+    gyro = { x: clamp(e.gamma / 35, -1, 1), y: clamp((e.beta - 40) / 35, -1, 1) };
   }, { passive: true });
-  document.addEventListener('mouseleave', function () { ptr.on = false; ptr.nx = 0.5; ptr.ny = 0.5; });
-  function tp(e) { var t0 = e.touches && e.touches[0]; if (!t0) return; ptr.x = t0.clientX; ptr.y = t0.clientY; ptr.on = true; ptr.nx = t0.clientX / Wd; ptr.ny = t0.clientY / Ht; }
-  window.addEventListener('touchstart', tp, { passive: true });
-  window.addEventListener('touchmove', tp, { passive: true });
-  window.addEventListener('touchend', function () { setTimeout(function () { ptr.on = false; ptr.nx = 0.5; ptr.ny = 0.5; }, 140); }, { passive: true });
   window.addEventListener('click', function (e) {
     if (e.target && e.target.closest && e.target.closest('a,button')) return;
     var drum = KINDS[clamp(Math.round(p), 0, LAST)] === 'drum';
-    shock(e.clientX, e.clientY, drum ? 1.2 : 0.8);
+    shock(e.clientX, e.clientY, drum ? 1.2 : 0.85);
     if (drum) {
       punch = 1;
       drumHit(clamp(e.clientX / Wd, 0, 1));
@@ -740,15 +833,21 @@
     if (!ready && introT > SEED_HOLD - 0.02) introT = SEED_HOLD - 0.02;
     if (!burst && ready && introT >= SEED_HOLD) doBurst();
     readScroll();
-    var pp = p;
+    var pp = p, f = dt * 60;
     p += (pRaw - p) * (calm ? 1 : 1 - Math.exp(-dt * 7.5));
     if (Math.abs(pRaw - p) < 0.0005) p = pRaw;
     pv = lerp(pv, (p - pp) / dt, 0.2);
+    if (pv > 0.05) dirSign = 1; else if (pv < -0.05) dirSign = -1;
     var sk = 1 - Math.exp(-dt * 3);
     ptr.sx += (ptr.nx - ptr.sx) * sk; ptr.sy += (ptr.ny - ptr.sy) * sk;
+    var dk = Math.pow(0.82, f); ptr.dvx *= dk; ptr.dvy *= dk;
+    if (gyro) { gyroS.x += (gyro.x - gyroS.x) * sk * 2; gyroS.y += (gyro.y - gyroS.y) * sk * 2; }
     var ph = (time * 1.2) % 1;
     beat = Math.exp(-ph / 0.07) + (ph > 0.25 ? 0.6 * Math.exp(-(ph - 0.25) / 0.07) : 0);
-    punch *= Math.pow(0.9, dt * 60);
+    secPulse = Math.exp(-((Date.now() % 1000) / 1000) / 0.09);
+    punch *= Math.pow(0.9, f);
+    /* a few sparks flare up at night */
+    if (!calm && burst && lastOver < 0.5) { var nsp = Math.round(N * 0.0022 * f); for (var k = 0; k < nsp; k++) { var ix = (Math.random() * N) | 0; GLW[ix] = 0.85 + Math.random() * 0.15; } }
     var L = step(dt);
     if (gl) renderGL(L); else if (g2) render2D(L);
     words();
@@ -777,6 +876,7 @@
     ready: function () { return ready && burst && introT > SEED_HOLD + 1.6; },
     boxes: function () { return BOX.map(function (b) { return b && { x0: b.cx - b.w / 2, x1: b.cx + b.w / 2, y0: b.cy - b.h / 2, y1: b.cy + b.h / 2 }; }); },
     n: N,
+    drawn: function () { return DRAWN; },
     renderer: function () { return gl ? 'webgl' : g2 ? '2d' : 'none'; },
     fps: function () { var s = 0; ftimes.forEach(function (x) { s += x; }); return ftimes.length ? Math.round(ftimes.length / s) : 0; }
   };
