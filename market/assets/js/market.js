@@ -1,6 +1,7 @@
-/* 기부 러브 플리마켓 웹 초청장 (/market/)
-   화면 한 장이 고정되고, 휠·스와이프·키·다음 버튼으로 장면만 바뀐다(v14~v16과 같은 방식).
-   떠나는 장면이 먼저 빠지고(0.36초) 새 장면이 들어와서, 두 장면의 글이 한 프레임에 겹치지 않는다. */
+/* 기부 러브 플리마켓 웹 초청장 v2 (/market/)
+   화면 한 장이 고정되고, 휠·스와이프·키·다음 버튼으로 장면 일곱 개가 제자리에서 바뀐다(v1과 같은 엔진).
+   떠나는 장면이 먼저 빠지고(0.36초) 새 장면이 들어와서, 두 장면의 글이 한 프레임에 겹치지 않는다.
+   stage의 data-tone은 아래 버튼 줄, data-top은 위 줄의 글자색, data-scene은 지금 장면(표지에서는 위 줄을 숨김). */
 (function () {
   'use strict';
   var d = document.documentElement;
@@ -49,7 +50,7 @@
   var KAKAO_KEY = '';
   var KAKAO_SDK = 'https://t1.kakaocdn.net/kakao_js_sdk/2.8.3/kakao.min.js';
   var KAKAO_SRI = 'sha384-oroumrnFVE0xtgqyDZJARgERibXg2C28380uaUZz2kHDS5CR7tu20eGiOU6GkTpy';
-  var shareData = { title: '기부 러브 플리마켓 · 2026 등촌교회', text: '11월 7일 토요일 낮 12시부터 오후 4시까지, 등촌교회에서 기부 러브 플리마켓이 열려요. 같이 가요!', url: URL0 };
+  var shareData = { title: '기부 러브 플리마켓 · 2026 등촌교회', text: '11월 7일 토요일 낮 12시부터 오후 4시까지, 등촌교회 주차장에서 기부 러브 플리마켓이 열려요. 같이 가요!', url: URL0 };
   var shareBtn = $('#shareBtn'), copyBtn = $('#copyBtn'), kakaoWait = null;
   function kakaoReady() { return !!(window.Kakao && window.Kakao.isInitialized && window.Kakao.isInitialized()); }
   function loadKakao() {
@@ -68,7 +69,7 @@
   function sendKakao(Kk) {
     Kk.Share.sendDefault({
       objectType: 'feed',
-      content: { title: '기부 러브 플리마켓', description: '11.07 토 12:00–16:00 · 등촌교회', imageUrl: URL0 + 'assets/img/og.jpg', imageWidth: 1200, imageHeight: 630, link: { mobileWebUrl: URL0, webUrl: URL0 } },
+      content: { title: '기부 러브 플리마켓', description: '11.07 토 12:00–16:00 · 등촌교회 주차장', imageUrl: URL0 + 'assets/img/og.jpg', imageWidth: 1200, imageHeight: 630, link: { mobileWebUrl: URL0, webUrl: URL0 } },
       buttons: [{ title: '초대장 열기', link: { mobileWebUrl: URL0, webUrl: URL0 } }]
     });
   }
@@ -102,14 +103,18 @@
   /* ---------- scenes ---------- */
   function setLive(sc, on) { sc.setAttribute('aria-hidden', on ? 'false' : 'true'); if ('inert' in sc) sc.inert = !on; }
   scenes.forEach(function (sc) { setLive(sc, false); });
-  var hooks = { s5: warmKakao };
+  var hooks = {};
+  hooks[scenes[N - 1].id] = warmKakao;
   function enter(n, dir) {
     var sc = scenes[n];
     stage.classList.toggle('rev', dir < 0);
     void sc.offsetWidth;
     sc.classList.add('on');
     setLive(sc, true);
-    stage.setAttribute('data-tone', sc.getAttribute('data-tone') || 'light');
+    var tone = sc.getAttribute('data-tone') || 'light';
+    stage.setAttribute('data-tone', tone);
+    stage.setAttribute('data-top', sc.getAttribute('data-top') || tone);
+    stage.setAttribute('data-scene', sc.id);
     var last = n === N - 1;
     stage.classList.toggle('last', last);
     if (!last) nextName.textContent = scenes[n + 1].getAttribute('data-name');
@@ -175,14 +180,22 @@
   prog.forEach(function (b, i) { b.addEventListener('click', function () { go(i); }); });
 
   /* ---------- small taps: one moving thing at a time ---------- */
-  var roof = $('.c0');
-  if (roof) roof.addEventListener('click', function () { if (calm) return; roof.classList.remove('tw'); void roof.getBoundingClientRect(); roof.classList.add('tw'); });
-  var para = $('.parasol');
-  if (para) para.addEventListener('click', function () { if (calm || !para.animate) return; para.animate([{ transform: 'rotate(0deg)' }, { transform: 'rotate(360deg)' }], { duration: 1500, easing: 'cubic-bezier(.16,1,.3,1)' }); });
-  $$('.tile').forEach(function (t) { t.addEventListener('click', function () { if (calm) return; t.classList.remove('pop'); void t.offsetWidth; t.classList.add('pop'); }); });
-  var box = $('.box'), s4 = $('#s4');
+  function replay(el, cls) { if (calm || !el) return; el.classList.remove(cls); void el.getBoundingClientRect(); el.classList.add(cls); }
+  var awn = $('.awn'), l0 = $('.l0');
+  if (awn) awn.addEventListener('click', function () { replay(l0, 'tw'); });
+  $$('.sw').forEach(function (g) {
+    g.addEventListener('click', function () {
+      if (calm || !g.animate) return;
+      g.animate([{ transform: 'rotate(0deg)' }, { transform: 'rotate(-9deg)' }, { transform: 'rotate(6deg)' }, { transform: 'rotate(-2deg)' }, { transform: 'rotate(0deg)' }], { duration: 1000, easing: 'cubic-bezier(.16,1,.3,1)' });
+    });
+  });
+  $$('.bl li').forEach(function (li) { li.addEventListener('click', function () { replay(li, 'pop'); }); });
+  var box = $('.box4'), s4 = $('#s4');
   if (box && s4) box.addEventListener('click', function () { if (!calm) s4.classList.toggle('again'); });
+  var p4 = $('.svc .p4');
+  if (p4) p4.addEventListener('click', function () { replay(p4, 'pulse'); });
 
-  var m = /^#s([0-5])$/.exec(location.hash);
-  go(m ? +m[1] : 0, 1);
+  var m = /^#s(\d)$/.exec(location.hash);
+  go(m && +m[1] < N ? +m[1] : 0, 1);
 })();
+
