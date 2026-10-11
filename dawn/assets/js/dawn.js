@@ -519,7 +519,7 @@
   }
 
   /* ---------- motion ---------- */
-  var time = 0, last = 0, p = 0, pRaw = 0, pv = 0, dirSign = 1, introT = calm ? 9 : 0, burst = calm, beat = 0, punch = 0, secPulse = 0, lastOver = 0;
+  var time = 0, last = 0, p = 0, pRaw = 0, pv = 0, dirSign = 1, introT = calm ? 9 : 0, burst = calm, beat = 0, punch = 0, SPD = 0;
   var ptr = { x: -1e4, y: -1e4, on: false, nx: 0.5, ny: 0.5, sx: 0.5, sy: 0.5, dvx: 0, dvy: 0, lx: null, ly: null };
   var gyro = null, gyroS = { x: 0, y: 0 };
   var M = [{}, {}], TX = 0, TY = 0, TS = 1;
@@ -538,18 +538,16 @@
     m.cx = B.cx; m.cy = B.cy; m.scale = 1; m.dy = 0;
     var amt = calm ? 0 : L.tilt, ax, ay;
     if (touch) {
-      ax = gyro ? gyroS.x * 0.9 : Math.sin(time * 0.42) * 0.55 + (ptr.sx - 0.5) * 0.6;
-      ay = gyro ? gyroS.y * 0.5 : Math.cos(time * 0.33) * 0.22;
+      ax = gyro ? gyroS.x * 0.9 : (ptr.sx - 0.5) * 0.6;
+      ay = gyro ? gyroS.y * 0.5 : 0;
     } else { ax = (ptr.sx - 0.5) * 1.15; ay = (ptr.sy - 0.5) * 0.6; }
     var th = ax * amt, ph = -ay * amt * 0.7;
     m.ct = Math.cos(th); m.st = Math.sin(th); m.cp = Math.cos(ph); m.sp = Math.sin(ph);
     m.depth = B.sc * 0.17;
     if (!calm) {
-      if (k === 'drum') { m.scale = 1 + 0.045 * beat + 0.08 * punch; m.dy = -beat * B.sc * 0.016; }
-      else if (k === 'sun') m.scale = 1 + Math.sin(time * 0.9) * 0.006 + 0.05 * punch;
-      else if (k === 'date') m.scale = 1 + 0.02 * secPulse;
+      if (k === 'drum') m.scale = 1 + 0.03 * beat + 0.08 * punch;
+      else if (k === 'sun') m.scale = 1 + 0.05 * punch;
       else if (k === 'title') m.scale = 1 + Math.sin(time * 0.7) * 0.006;
-      else if (k === 'gift') m.dy = Math.sin(time * 1.6) * B.sc * 0.008;
     }
   }
   function project(m, x, y, z) {
@@ -571,12 +569,13 @@
     /* in flight: a curved path whose turn follows the scroll direction, plus a burst away from the middle */
     var swAmp = calm ? 0 : 0.42 * dirSign, bAmp = calm ? 0 : md * 0.2;
     var bcx = seed ? 0 : (M[0].cx + M[1].cx) / 2, bcy = seed ? 0 : (M[0].cy + M[1].cy) / 2;
-    /* at rest: a slow flowing field, a light wave sweeping across the shape */
-    var flowA = calm ? 0 : lerp(2.6, 1.0, L.over), jit = calm ? 0 : 0.45;
+    /* only the cover breathes (a slow flowing field and a light sweep); every other scene holds its shape still */
+    var w0 = calm ? 0 : 1 - smooth(0.04, 0.55, p);
+    var flowA = 2.6 * w0, jit = calm ? 0 : 0.22 + 0.23 * w0;
     var restK = calm || seed ? 0 : 1 - smooth(0.03, 0.18, Math.min(t, 1 - t));
-    var sN = clamp(Math.round(p), 0, LAST), wb = BOX[sN];
+    var wb = BOX[0];
     var wPos = ((time % 3.6) / 3.6) * 1.5 - 0.25, wx0 = wb ? wb.cx - wb.w / 2 : 0, wW = wb ? Math.max(40, wb.w) : Wd;
-    var wAmp = restK * (night ? 6 : 3);
+    var wAmp = restK * 6 * w0, spd = 0;
     var pr = clamp(md * 0.2, 80, 200), pr2 = pr * pr, rep = touch ? 2.2 : 1.6, swr = 1.4, drag = 0.15;
     var pon = ptr.on && !calm && burst;
     var gd = Math.pow(0.9, f);
@@ -618,9 +617,9 @@
         cg += (CA[c3 + 1] + (CB[c3 + 1] - CA[c3 + 1]) * ei - pcG) * tint;
         cb += (CA[c3 + 2] + (CB[c3 + 2] - CA[c3 + 2]) * ei - pcB) * tint;
       }
-      if (flowA && !amb) {
-        tx += Math.sin(ty * 0.017 + time * 1.3 + PH[i] * 0.3) * flowA + Math.sin(time * F1[i] + PH[i]) * jit;
-        ty += Math.cos(tx * 0.015 + time * 1.1 + PH[i] * 0.3) * flowA + Math.cos(time * F2[i] + PH[i]) * jit;
+      if (!amb && !calm) {
+        if (flowA > 0.02) { tx += Math.sin(ty * 0.017 + time * 1.3 + PH[i] * 0.3) * flowA; ty += Math.cos(tx * 0.015 + time * 1.1 + PH[i] * 0.3) * flowA; }
+        tx += Math.sin(time * F1[i] + PH[i]) * jit; ty += Math.cos(time * F2[i] + PH[i]) * jit;
       }
       var x = PX[i], y = PY[i], vx = VX[i], vy = VY[i];
       if (calm) { x = tx; y = ty; vx = 0; vy = 0; }
@@ -643,6 +642,7 @@
         vx *= damp; vy *= damp; x += vx * f; y += vy * f;
       }
       PX[i] = x; PY[i] = y; VX[i] = vx; VY[i] = vy;
+      if (!amb) spd += (vx < 0 ? -vx : vx) + (vy < 0 ? -vy : vy);
       var gw = GLW[i] *= gd;
       var al = AL[i] * alF * (amb ? ambA : 1) * (1 + gw * 1.4) * fadeCalm;
       if (night && !calm) al *= 0.78 + 0.22 * Math.sin(time * F1[i] * 2.6 + PH[i]);
@@ -660,7 +660,7 @@
       }
     }
     DRAWN = N + G;
-    lastOver = L.over;
+    SPD = spd / N;
     return L;
   }
   function doBurst() {
@@ -844,10 +844,9 @@
     if (gyro) { gyroS.x += (gyro.x - gyroS.x) * sk * 2; gyroS.y += (gyro.y - gyroS.y) * sk * 2; }
     var ph = (time * 1.2) % 1;
     beat = Math.exp(-ph / 0.07) + (ph > 0.25 ? 0.6 * Math.exp(-(ph - 0.25) / 0.07) : 0);
-    secPulse = Math.exp(-((Date.now() % 1000) / 1000) / 0.09);
     punch *= Math.pow(0.9, f);
-    /* a few sparks flare up at night */
-    if (!calm && burst && lastOver < 0.5) { var nsp = Math.round(N * 0.0022 * f); for (var k = 0; k < nsp; k++) { var ix = (Math.random() * N) | 0; GLW[ix] = 0.85 + Math.random() * 0.15; } }
+    /* a few sparks flare up on the cover only */
+    if (!calm && burst && p < 0.5) { var nsp = Math.round(N * 0.0022 * f * (1 - p * 2)); for (var k = 0; k < nsp; k++) { var ix = (Math.random() * N) | 0; GLW[ix] = 0.85 + Math.random() * 0.15; } }
     var L = step(dt);
     if (gl) renderGL(L); else if (g2) render2D(L);
     words();
@@ -877,6 +876,7 @@
     boxes: function () { return BOX.map(function (b) { return b && { x0: b.cx - b.w / 2, x1: b.cx + b.w / 2, y0: b.cy - b.h / 2, y1: b.cy + b.h / 2 }; }); },
     n: N,
     drawn: function () { return DRAWN; },
+    speed: function () { return SPD; },
     renderer: function () { return gl ? 'webgl' : g2 ? '2d' : 'none'; },
     fps: function () { var s = 0; ftimes.forEach(function (x) { s += x; }); return ftimes.length ? Math.round(ftimes.length / s) : 0; }
   };
