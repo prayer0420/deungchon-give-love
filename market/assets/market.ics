@@ -1,0 +1,24 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Deungchon Church//GIVE LOVE market//KO
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:give-love-market-20261107@prayer0420.github.io
+DTSTAMP:20261011T000000Z
+DTSTART:20261107T030000Z
+DTEND:20261107T070000Z
+SUMMARY:기부 러브 플리마켓 · 등촌교회
+LOCATION:등촌교회 교육관 1층 · 야외 주차장\, 서울 양천구
+  목동중앙북로8길 49
+DESCRIPTION:이웃에게 사랑을 전하는 2026 등촌교회 기부 러
+ 브 플리마켓. 비가 오면 교육관 실내 로비와 소강당에서
+  열려요. https://prayer0420.github.io/deungchon-give-love/market/
+URL:https://prayer0420.github.io/deungchon-give-love/market/
+BEGIN:VALARM
+TRIGGER:-PT2H
+ACTION:DISPLAY
+DESCRIPTION:오늘 낮 12시\, 기부 러브 플리마켓
+END:VALARM
+END:VEVENT
+END:VCALENDAR
