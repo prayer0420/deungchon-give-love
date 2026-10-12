@@ -190,8 +190,12 @@
     });
   });
   $$('.bl li').forEach(function (li) { li.addEventListener('click', function () { replay(li, 'pop'); }); });
-  var box = $('.box4'), s4 = $('#s4');
-  if (box && s4) box.addEventListener('click', function () { if (!calm) s4.classList.toggle('again'); });
+  /* 희망상자를 누르면 물건이 하트가 되어 담기는 장면을 처음부터 다시 */
+  var box = $('.box4');
+  if (box) box.addEventListener('click', function () {
+    if (calm || !box.getAnimations) return;
+    box.getAnimations({ subtree: true }).forEach(function (a) { a.currentTime = 0; a.play(); });
+  });
   var p4 = $('.svc .p4');
   if (p4) p4.addEventListener('click', function () { replay(p4, 'pulse'); });
 
