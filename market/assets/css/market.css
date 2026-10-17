@@ -207,13 +207,13 @@ svg{display:block;overflow:visible}
 .btns{display:flex;flex-wrap:wrap;gap:calc(8*var(--u));margin-top:calc(22*var(--u))}
 .pill{display:inline-flex;align-items:center;justify-content:center;height:max(calc(40*var(--u)),36px);padding:0 calc(16*var(--u));border-radius:999px;background:var(--choc);color:var(--cream);font-size:max(calc(13*var(--u)),12px);font-weight:800;letter-spacing:-.01em;text-decoration:none}
 
-/* 4 수익금: 벽돌색 바탕. 다섯 부스의 물건이 하트로 바뀌어 희망상자에 담기고, 덮개가 닫히고 테이프가 붙은 뒤 「TO. 기아대책」 꼬리표가 걸린다.
+/* 4 수익금: 벽돌색 바탕. 다섯 부스의 물건이 하트로 바뀌어 초록 「따뜻한 희망상자」에 담기고, 덮개가 닫히고 테이프가 붙은 뒤 「TO. 기아대책」 꼬리표가 걸린다.
    기본값(동작 줄이기 · 자바스크립트 꺼짐)은 마지막 모습인 닫힌 상자와 꼬리표다. 상자를 누르면 처음부터 다시(market.js). */
 .s4{--bg:var(--brick);--fg:var(--cream)}
 .box4{width:calc(310*var(--u));margin:0 auto;cursor:pointer}
 .box4 svg{width:100%;height:auto}
-.hb-t{font:800 16px "Paperlogy";letter-spacing:.02em;fill:var(--choc)}
-.hb-e{font:800 7px "Archivo";letter-spacing:2.6px;fill:#a9824c}
+.hb-t{font:900 22px "Paperlogy";letter-spacing:-.01em;fill:#fffaf0}
+.hb-e{font:700 11px "Pretendard";letter-spacing:.02em;fill:#fffaf0;opacity:.92}.hb-l{font:700 6.5px "Pretendard";letter-spacing:.03em;fill:#fffaf0;opacity:.72}
 .tg-a{font:800 7px "Archivo";letter-spacing:1.4px;fill:var(--brick)}
 .tg-b{font:800 13px "Pretendard";letter-spacing:-.01em;fill:var(--choc)}
 .dc{stroke:var(--cream);stroke-width:2.5}
