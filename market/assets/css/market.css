@@ -271,7 +271,7 @@ svg{display:block;overflow:visible}
 .svc li{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;height:calc(92*var(--u));border-radius:calc(14*var(--u));box-shadow:inset 0 0 0 1.5px rgba(248,238,220,.34)}
 .svc b{font:900 calc(24*var(--u))/1 "Paperlogy";letter-spacing:-.01em}
 .svc .p4{background:var(--mustard);color:var(--choc);box-shadow:none;cursor:pointer}
-.svc .p4>span{margin-top:calc(8*var(--u));font-size:calc(13*var(--u));font-weight:800;letter-spacing:-.01em;white-space:nowrap}
+.svc .p4>span{margin-top:calc(7*var(--u));font-size:calc(13*var(--u));font-weight:800;line-height:1.28;text-align:center;letter-spacing:-.01em;white-space:nowrap}
 .svc .p4::after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:0 0 0 2px var(--mustard);opacity:0;pointer-events:none}
 .deck .s5 .svc li{opacity:0;transform:translate3d(0,calc(18*var(--u)),0) scale(.8)}
 .deck .s5.on .svc li{opacity:1;transform:none;transition:transform .8s cubic-bezier(.3,1.4,.5,1) calc(360ms + var(--i)*110ms),opacity .4s linear calc(360ms + var(--i)*110ms)}
