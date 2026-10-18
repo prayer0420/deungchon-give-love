@@ -113,3 +113,4 @@
 - 실물 상자처럼 한 가지 색으로 찍히도록 market2_logo.py가 원본(ai-workspace/.local/deungchon-site/market2-src/kfhi-logo-src.png)의 흰 바탕을 투명하게, 두 초록을 연한 흰색(#f1f6ef)으로 바꿔 assets/img/kfhi-logo.png(285×92)를 만든다. 상자 SVG에서 image로 35.9×11.6 단위 크기에 놓는다.
 - 다시 만들 때는 market2_logo.py → market2_build.mjs 순서. 로고 파일은 assets/img에 있어 저장소로 같이 복사한다.
 - 확인: market2_s4frames 14개 시점 프레임 · 끝난 모습 · 탭 다시보기, 오류 0건. 끝난 모습을 확대해 로고가 또렷한 것을 봤다.
+- 같은 날 이어서: 앞면 왼쪽 위 새싹 그림을 빼고 작은 글자 두 줄(이웃과 함께 나누는 / 따뜻한 마음)만 남겨 6단위 올렸다. 아래 로고는 그대로(ops-web-nosprout-1018.json). s4frames 오류 0건.
